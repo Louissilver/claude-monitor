@@ -17,6 +17,7 @@ const fs = require('node:fs')
 const os = require('node:os')
 const { getUsage } = require('./usage')
 const auth = require('./auth')
+const platform = require('./platform')
 
 // Precisa ser chamado antes de app estar pronto (e antes de qualquer janela).
 app.enableSandbox()
@@ -48,7 +49,7 @@ let config
 function loadConfig() {
   const defaults = {
     plan: 'max5x',
-    startWithWindows: true,
+    startAtLogin: true,
     sessionTokenBudget: 630000000,
     weeklyTokenBudget: 3450000000,
     weeklyAnchorIso: null,
@@ -61,7 +62,12 @@ function loadConfig() {
   }
   for (const p of [EXTERNAL_CONFIG, path.join(__dirname, 'config.json')]) {
     try {
-      return { ...defaults, ...JSON.parse(fs.readFileSync(p, 'utf8')) }
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8'))
+      // compat: configs salvos antes do port Linux usavam `startWithWindows`.
+      if (raw.startAtLogin === undefined && typeof raw.startWithWindows === 'boolean') {
+        raw.startAtLogin = raw.startWithWindows
+      }
+      return { ...defaults, ...raw }
     } catch {}
   }
   return defaults
@@ -73,7 +79,7 @@ function loadConfig() {
 // nunca sobrevivem a este filtro porque o objeto de saída não tem protótipo.
 const CONFIG_SCHEMA = {
   plan: (v) => v === 'pro' || v === 'max5x' || v === 'max20x',
-  startWithWindows: (v) => typeof v === 'boolean',
+  startAtLogin: (v) => typeof v === 'boolean',
   alerts: (v) => typeof v === 'boolean',
   alertThresholds: (v) =>
     Array.isArray(v) &&
@@ -122,6 +128,13 @@ function checkAlerts(config, d) {
 // Só handlers cujo evento veio do frame principal da nossa própria janela.
 function fromOwnWindow(event) {
   return !!win && !win.isDestroyed() && event.senderFrame === win.webContents.mainFrame
+}
+
+// `platform` não é persistido em disco (fica fora de CONFIG_SCHEMA, então
+// nunca volta do renderer) — só informa a UI para trocar o texto do
+// checkbox de autostart ("com o Windows" vs. "ao entrar na sessão").
+function configForRenderer(cfg) {
+  return { ...cfg, platform: process.platform }
 }
 
 function createWindow() {
@@ -175,7 +188,7 @@ function createWindow() {
   }
 
   win.webContents.once('did-finish-load', () => {
-    win.webContents.send('config', config)
+    win.webContents.send('config', configForRenderer(config))
     tick()
     win.webContents.send('auth-state', { connected: auth.isConnected() })
     pollTimer = setInterval(tick, config.pollIntervalMs)
@@ -249,7 +262,9 @@ ipcMain.on('auth-start', (event) => {
   if (!auth.isEncryptionAvailable()) {
     win.webContents.send('auth-result', {
       ok: false,
-      error: 'Armazenamento seguro (DPAPI) indisponível neste sistema — login recusado.',
+      error:
+        'Armazenamento seguro do sistema indisponível (Windows: DPAPI; Linux: keyring como ' +
+        'gnome-keyring/kwallet, ausente ou desligado) — login recusado.',
     })
     return
   }
@@ -314,24 +329,14 @@ ipcMain.on('save-config', (event, patch) => {
   } catch {}
   config = loadConfig()
   armed.clear()
-  if (win && !win.isDestroyed()) win.webContents.send('config', config)
-  applyAutoStart()
+  if (win && !win.isDestroyed()) win.webContents.send('config', configForRenderer(config))
+  platform.applyAutoStart(config)
 })
 
 ipcMain.on('quit', (event) => {
   if (!fromOwnWindow(event)) return
   app.quit()
 })
-
-// Respeita a escolha da pessoa em vez de re-registrar a cada abertura.
-// Padrão ligado (config.startWithWindows), mas desmarcar realmente desliga.
-function applyAutoStart() {
-  if (!app.isPackaged) return // em dev não mexe na inicialização do Windows
-  app.setLoginItemSettings({
-    openAtLogin: config.startWithWindows !== false,
-    openAsHidden: false,
-  })
-}
 
 app.whenReady().then(() => {
   if (process.platform === 'win32') app.setAppUserModelId('com.local.claude-monitor')
@@ -341,7 +346,7 @@ app.whenReady().then(() => {
     })
   })
   createWindow() // define `config`
-  applyAutoStart()
+  platform.applyAutoStart(config)
 })
 
 app.on('window-all-closed', () => {

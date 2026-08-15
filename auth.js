@@ -5,8 +5,9 @@
 //     code por tokens; `pending` expira em 10 min e é consumido em uma única
 //     tentativa (R1).
 //   - tokens nunca tocam disco em texto claro: são cifrados com `safeStorage`
-//     do Electron (DPAPI no Windows) antes de gravar (R2). Sem DPAPI
-//     disponível, o login é recusado — não há fallback para texto claro.
+//     do Electron (DPAPI no Windows, keyring no Linux — ver platform.js e
+//     ADR-002) antes de gravar (R2). Sem armazenamento seguro disponível, o
+//     login é recusado — não há fallback para texto claro.
 //   - escopo pedido é o mínimo necessário para ler perfil + usage; o app
 //     nunca cria API keys, então `org:create_api_key` não é solicitado (R3).
 //   - token colado manualmente precisa bater com o formato conhecido de
@@ -16,6 +17,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
 const { safeStorage } = require('electron')
+const platform = require('./platform')
 
 const CLIENT_ID = '9d1c250a-e61b-44d9-88ed-5944d1962f5e'
 const REDIRECT = 'https://platform.claude.com/oauth/code/callback'
@@ -51,11 +53,7 @@ let pending = null // { verifier, state, createdAt }
 let profile = null // { email, name, plan } — cache da identidade da conta
 
 function isEncryptionAvailable() {
-  try {
-    return safeStorage.isEncryptionAvailable()
-  } catch {
-    return false
-  }
+  return platform.isSecureStorageUsable()
 }
 
 function load() {

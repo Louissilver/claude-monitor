@@ -587,8 +587,17 @@ window.api.onError((msg) => {
   el('status-text').textContent = 'error'
   console.error(msg)
 })
+// texto do checkbox de autostart depende do SO (main.js manda `cfg.platform`,
+// que nunca é persistido — só serve para a UI escolher o texto certo)
+function applyAutostartLabel(platformName) {
+  const label = el('set-autostart-label')
+  if (!label) return
+  label.textContent =
+    platformName === 'linux' ? 'Iniciar automaticamente ao entrar na sessão' : 'Iniciar com o Windows'
+}
 window.api.onConfig((cfg) => {
   currentConfig = cfg || {}
+  applyAutostartLabel(currentConfig.platform)
 })
 window.api.onRealUsage((u) => {
   realUsage = u || null
@@ -690,7 +699,7 @@ function clearSaveDirty() {
 }
 function populateSettings() {
   const c = currentConfig || {}
-  el('set-autostart').checked = c.startWithWindows !== false
+  el('set-autostart').checked = c.startAtLogin !== false
   el('set-alerts').checked = c.alerts !== false
   const th = c.alertThresholds || [80, 95]
   el('set-t1').value = th[0] != null ? th[0] : 80
@@ -732,7 +741,7 @@ el('set-save').addEventListener('click', () => {
   const num = (id) => parseFloat(el(id).value)
   const fire = num('set-fire')
   window.api.saveConfig({
-    startWithWindows: el('set-autostart').checked,
+    startAtLogin: el('set-autostart').checked,
     alerts: el('set-alerts').checked,
     alertThresholds: [num('set-t1'), num('set-t2')]
       .filter((n) => n >= 1 && n <= 100)

@@ -1,7 +1,7 @@
 # Claude Monitor
 
 [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
-[![Plataforma: Windows](https://img.shields.io/badge/plataforma-Windows-0078D6.svg)](#pré-requisitos)
+[![Plataforma: Windows | Linux](https://img.shields.io/badge/plataforma-Windows%20%7C%20Linux-0078D6.svg)](#pré-requisitos)
 [![Electron](https://img.shields.io/badge/Electron-42.8.0-47848F.svg)](https://www.electronjs.org/)
 [![PRs bem-vindos](https://img.shields.io/badge/PRs-bem--vindos-brightgreen.svg)](#contribuindo)
 
@@ -46,7 +46,8 @@ em [`docs/ADR-001`](docs/ADR-001-claude-monitor-seguro.md).
 - 🔔 Alertas configuráveis por notificação nativa do Windows ao cruzar limites de uso.
 - 🔒 Funciona 100% offline por padrão, lendo só os logs locais do Claude Code — conectar a conta é opcional.
 - 🪟 Widget flutuante, sem moldura, sempre visível, com modo minimizado.
-- 🚀 Inicialização automática com o Windows (configurável).
+- 🚀 Inicialização automática ao ligar/entrar na sessão (configurável), em Windows e Linux.
+- 🐧 Suporte a Linux/Ubuntu com pacote `.deb` e AppImage (ver [ADR-002](docs/ADR-002-suporte-linux.md)).
 
 ## Por que este projeto existe
 
@@ -66,10 +67,11 @@ riscos reais de segurança neles (detalhados na íntegra no
 
 ## Pré-requisitos
 
-- **Windows** (único SO suportado)
+- **Windows** ou **Linux/Ubuntu** (macOS não é suportado)
 - [Node.js](https://nodejs.org/) 18 ou superior
 - [npm](https://www.npmjs.com/) (vem com o Node.js)
 - [Git](https://git-scm.com/)
+- No Linux, bibliotecas de runtime do Electron: `libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2t64 libnotify4 libsecret-1-0` (o pacote `.deb` já declara essas dependências; instalando via `.deb` o `apt` resolve sozinho)
 
 ## Instalação
 
@@ -112,22 +114,23 @@ Sem conectar, o widget já funciona lendo os logs locais do Claude Code
 (`~/.claude/projects/*.jsonl`) — zero token em disco, zero rede. Para ver o %
 oficial da Anthropic, clique na engrenagem → **Entrar pelo navegador**.
 
-O login exige que o Windows tenha DPAPI disponível (é o mecanismo que cifra o
-token em disco, via `safeStorage` do Electron). Se `safeStorage` não estiver
-disponível no seu perfil do Windows, o app recusa o login em vez de gravar o
+O login exige um armazenamento seguro do sistema disponível — DPAPI no
+Windows, ou um keyring ativo (gnome-keyring/kwallet) no Linux, via
+`safeStorage` do Electron. Sem isso, o app recusa o login em vez de gravar o
 token sem cifra — ver [Segurança](#segurança).
 
 ## Configuração
 
 As opções abaixo ficam em `config.json` (valores padrão) e podem ser
-sobrescritas por um `config.json` externo em `%USERPROFILE%\.claude-monitor\`
-— editável sem precisar reinstalar. A maioria também é ajustável direto pela
-UI (engrenagem → Configurações).
+sobrescritas por um `config.json` externo — `%USERPROFILE%\.claude-monitor\`
+no Windows, `~/.claude-monitor/` no Linux — editável sem precisar
+reinstalar. A maioria também é ajustável direto pela UI (engrenagem →
+Configurações).
 
 | Campo | Padrão | Descrição |
 |---|---|---|
 | `plan` | `"max5x"` | Plano Claude, usado para calibrar os orçamentos estimados (`pro`, `max5x`, `max20x`) |
-| `startWithWindows` | `true` | Abre o widget sozinho ao ligar o computador |
+| `startAtLogin` | `true` | Abre o widget sozinho ao ligar o computador (Windows) ou entrar na sessão (Linux, via XDG Autostart) |
 | `alerts` | `true` | Notificações nativas ao cruzar os limites configurados |
 | `alertThresholds` | `[80, 95]` | Percentuais (sessão e semana) que disparam alerta |
 | `fireThreshold` | `90` | % de sessão a partir do qual o bichinho "pega fogo" |
@@ -136,12 +139,29 @@ UI (engrenagem → Configurações).
 
 ## Gerando o instalável
 
+**Windows** (do próprio Windows):
+
 ```bash
 npm run dist:win
 ```
 
 Gera um `.zip` não assinado em `dist/` com o app empacotado (via
 `electron-builder`).
+
+**Linux** (`.deb` + AppImage): precisa rodar de dentro de um Linux de
+verdade — WSL com uma distro Ubuntu, uma VM, ou CI. O `electron-builder`
+**não builda esses alvos a partir do Windows puro**: o `.deb` é pulado
+silenciosamente e o AppImage falha (`EPERM` ao criar symlink — Windows exige
+privilégio elevado/Developer Mode para isso). Dentro do WSL/Linux:
+
+```bash
+npm run dist:linux
+```
+
+Gera `dist/*.deb` e `dist/*.AppImage`. Instale o `.deb` com
+`sudo apt install ./dist/*.deb` — o `apt` resolve as dependências de runtime
+sozinho. Passo a passo completo de uma VM de teste em
+[`docs/setup-virtualbox-ubuntu.md`](docs/setup-virtualbox-ubuntu.md).
 
 ## Segurança
 
@@ -150,7 +170,7 @@ detalhe de implementação — ver o raciocínio completo, risco por risco, em
 [`docs/ADR-001`](docs/ADR-001-claude-monitor-seguro.md). Resumo dos
 controles:
 
-- **Token cifrado, nunca em texto claro** — `safeStorage` (DPAPI no Windows); sem cifra disponível, login é recusado.
+- **Token cifrado, nunca em texto claro** — `safeStorage` (DPAPI no Windows, keyring no Linux). No Linux, sem gnome-keyring/kwallet ativo o Electron cai num backend que só ofusca (`basic_text`) — esse backend é rejeitado explicitamente, não só a ausência de cifra; ver `platform.js`.
 - **`state` OAuth validado** em comparação de tempo constante; expira em 10 min e é consumido numa tentativa só.
 - **Escopo mínimo** solicitado ao servidor OAuth — sem poder de criar API keys.
 - **Electron isolado**: `contextIsolation`, `sandbox`, `nodeIntegration: false`, sem `child_process`, navegação e popups do renderer bloqueados.
@@ -168,6 +188,7 @@ Encontrou uma falha de segurança? Não abra uma issue pública — veja
 claude-monitor/
 ├── main.js          # Processo principal: janela, IPC, polling de uso, CSP
 ├── auth.js          # Fluxo OAuth + armazenamento cifrado do token
+├── platform.js      # Diferenças Windows/Linux: autostart e checagem de cifra
 ├── preload.js       # Ponte mínima entre renderer e processo principal
 ├── usage.js         # Leitura local dos logs do Claude Code (sem rede)
 ├── config.json      # Configuração padrão
@@ -176,7 +197,9 @@ claude-monitor/
 │   ├── style.css    # Estilo e animações
 │   └── pet.js        # Lógica do bichinho e da UI
 └── docs/
-    └── ADR-001-*.md  # Decisão de arquitetura de segurança
+    ├── ADR-001-*.md                # Decisão de arquitetura de segurança
+    ├── ADR-002-suporte-linux.md    # Decisão do port Linux/Ubuntu
+    └── setup-virtualbox-ubuntu.md  # Tutorial: VM de teste no VirtualBox
 ```
 
 ## Atualizando
@@ -196,7 +219,7 @@ Contribuições são bem-vindas. Para propor uma mudança:
 
 1. Faça um fork do repositório e crie uma branch a partir de `main`: `git checkout -b minha-melhoria`.
 2. Rode `npm ci` e `npm run postinstall-electron` para preparar o ambiente.
-3. Faça a alteração. Se tocar em `auth.js`, `main.js` ou `preload.js` — os arquivos que lidam com credenciais, rede e IPC —, leia o [ADR-001](docs/ADR-001-claude-monitor-seguro.md) antes: qualquer mudança nesses arquivos precisa manter (ou justificar explicitamente por que relaxa) cada controle listado lá.
+3. Faça a alteração. Se tocar em `auth.js`, `main.js`, `preload.js` ou `platform.js` — os arquivos que lidam com credenciais, rede, IPC e integração com o SO —, leia o [ADR-001](docs/ADR-001-claude-monitor-seguro.md) e o [ADR-002](docs/ADR-002-suporte-linux.md) antes: qualquer mudança nesses arquivos precisa manter (ou justificar explicitamente por que relaxa) cada controle listado lá.
 4. Teste localmente com `npm start` antes de abrir o PR.
 5. Rode `npm audit` se tiver alterado dependências.
 6. Abra um Pull Request descrevendo o quê e o porquê da mudança.

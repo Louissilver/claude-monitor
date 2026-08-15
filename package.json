@@ -1,13 +1,14 @@
 {
   "name": "claude-monitor",
   "version": "1.0.0",
-  "description": "Widget desktop para monitorar o uso do Claude no Windows — build local, foco em não vazar credenciais.",
+  "description": "Widget desktop para monitorar o uso do Claude (Windows e Linux/Ubuntu) — build local, foco em não vazar credenciais.",
   "private": true,
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "postinstall-electron": "node node_modules/electron/install.js",
-    "dist:win": "electron-builder --win zip"
+    "dist:win": "electron-builder --win zip",
+    "dist:linux": "electron-builder --linux deb AppImage"
   },
   "license": "MIT",
   "author": "Louissilver",
@@ -34,11 +35,22 @@
       "preload.js",
       "usage.js",
       "auth.js",
+      "platform.js",
       "config.json",
       "renderer/**"
     ],
     "win": {
       "target": "zip"
+    },
+    "linux": {
+      "target": ["deb", "AppImage"],
+      "category": "Utility",
+      "maintainer": "Louissilver",
+      "synopsis": "Widget desktop que monitora o uso do Claude",
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+    },
+    "deb": {
+      "depends": ["libnotify4", "libsecret-1-0"]
     }
   }
 }
