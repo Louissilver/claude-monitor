@@ -1,0 +1,13 @@
+{
+  "plan": "max5x",
+  "startWithWindows": true,
+  "sessionTokenBudget": 630000000,
+  "weeklyTokenBudget": 3450000000,
+  "weeklyAnchorIso": null,
+  "alerts": true,
+  "alertThresholds": [80, 95],
+  "fireThreshold": 90,
+  "pollIntervalMs": 4000,
+  "activeThresholdMs": 20000,
+  "sleepThresholdMs": 300000
+}
