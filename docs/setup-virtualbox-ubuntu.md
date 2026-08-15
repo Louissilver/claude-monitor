@@ -99,6 +99,23 @@ npm run postinstall-electron
 npm start
 ```
 
+Se `npm start` falhar com `FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc` /
+"SUID sandbox helper binary was found, but is not configured correctly": é
+esperado numa instalação via `npm` — o binário de sandbox do Chromium precisa
+ser `root:root` com bit setuid, e só root consegue configurar isso, não o
+`npm install`. Corrija uma vez:
+
+```bash
+sudo chown root:root node_modules/electron/dist/chrome-sandbox
+sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+npm start
+```
+
+**Não use a flag `--no-sandbox`** como atalho — o app chama
+`app.enableSandbox()` de propósito (ver ADR-001), então prefere falhar
+fechado a rodar sem a proteção; `--no-sandbox` desligaria exatamente o
+controle que o projeto existe para garantir.
+
 O widget deve abrir ancorado no canto da tela, igual no Windows. É aqui que
 dá pra testar o que o WSLg não cobre:
 
