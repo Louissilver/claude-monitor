@@ -50,11 +50,20 @@ Ubuntu rodando sozinho).
    clipboard compartilhado, útil para copiar comandos deste tutorial para
    dentro da VM):
    - Menu da janela da VM → **Dispositivos** → **Inserir imagem de CD das Adições
-     para Convidado…**
-   - No Ubuntu, abra o CD montado e rode:
+     para Convidado…** Se aparecer um popup perguntando se quer rodar o
+     software, feche-o — vamos rodar via terminal.
+   - Instale as dependências e entre no diretório onde o CD foi montado
+     (o nome exato da pasta varia por versão, por isso o `*`):
      ```bash
      sudo apt update
      sudo apt install -y build-essential dkms linux-headers-$(uname -r)
+     cd /media/$USER/VBox_GAs_*/
+     ```
+   - Confira que o instalador está ali antes de rodar (se `cd` der erro de
+     "No such file or directory", o CD não montou — repita o passo do menu
+     **Dispositivos** acima e tente de novo):
+     ```bash
+     ls
      sudo ./VBoxLinuxAdditions.run
      ```
    - Reinicie a VM.
