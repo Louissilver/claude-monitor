@@ -68,7 +68,7 @@ riscos reais de segurança neles (detalhados na íntegra no
 ## Pré-requisitos
 
 - **Windows** ou **Linux/Ubuntu** (macOS não é suportado)
-- [Node.js](https://nodejs.org/) 18 ou superior
+- [Node.js](https://nodejs.org/) **22.12 ou superior** (exigido pelo próprio toolchain do `electron@42.8.0` — `engines.node` no `package.json` do pacote; versões anteriores falham no `postinstall-electron` com `ERR_REQUIRE_ESM`)
 - [npm](https://www.npmjs.com/) (vem com o Node.js)
 - [Git](https://git-scm.com/)
 - No Linux, bibliotecas de runtime do Electron: `libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2t64 libnotify4 libsecret-1-0` (o pacote `.deb` já declara essas dependências; instalando via `.deb` o `apt` resolve sozinho)
@@ -96,6 +96,35 @@ Confira a árvore por vulnerabilidades conhecidas antes de usar:
 
 ```bash
 npm audit
+```
+
+### Problemas comuns
+
+**`Error [ERR_REQUIRE_ESM]` no `npm run postinstall-electron`** — Node
+abaixo de 22.12. `npm ci` roda sem erro (só avisa `EBADENGINE`), mas o
+`install.js` do próprio `electron` não funciona em Node antigo. Confira com
+`node -v`; se for menor que 22.12, atualize o Node (em máquina
+corporativa/compartilhada, prefira [nvm](https://github.com/nvm-sh/nvm) em
+vez de trocar o Node global do sistema, para não afetar outros projetos):
+
+```bash
+nvm install 22
+nvm use 22
+npm run postinstall-electron
+```
+
+**`FATAL:sandbox/linux/suid/...` / "SUID sandbox helper binary was found,
+but is not configured correctly"** (Linux, ao rodar `npm start`) — o
+binário de sandbox do Chromium precisa ser `root:root` com bit setuid, e só
+root consegue configurar isso; `npm install` não tem esse privilégio. É
+esperado — o app chama `app.enableSandbox()` de propósito (ver
+[ADR-001](docs/ADR-001-claude-monitor-seguro.md)) e prefere falhar a rodar
+sem a proteção. Corrija uma vez (não use `--no-sandbox` — desligaria
+exatamente esse controle):
+
+```bash
+sudo chown root:root node_modules/electron/dist/chrome-sandbox
+sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
 ```
 
 ## Uso

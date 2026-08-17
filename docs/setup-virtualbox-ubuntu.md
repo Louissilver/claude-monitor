@@ -80,9 +80,11 @@ Ubuntu rodando sozinho).
 Dentro da VM Ubuntu, abra um terminal:
 
 ```bash
-# Node.js LTS
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+# Node.js 22 (o electron@42.8.0 exige >= 22.12 — "lts" pode virar 24.x no
+# futuro e não garante essa versão mínima, por isso fixamos em 22.x)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs git
+node -v   # confirme >= 22.12 antes de continuar
 
 # libs de runtime que o Electron precisa (mesmas do .deb, ver package.json)
 sudo apt install -y libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 \
