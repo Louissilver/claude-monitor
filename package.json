@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "postinstall-electron": "node node_modules/electron/install.js",
-    "dist:win": "electron-builder --win zip",
+    "dist:win": "electron-builder --win nsis zip",
     "dist:linux": "electron-builder --linux deb AppImage"
   },
   "license": "MIT",
@@ -40,7 +40,14 @@
       "renderer/**"
     ],
     "win": {
-      "target": "zip"
+      "target": ["nsis", "zip"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "linux": {
       "target": ["deb", "AppImage"],

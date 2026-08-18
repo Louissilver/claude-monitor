@@ -188,8 +188,15 @@ Configurações).
 npm run dist:win
 ```
 
-Gera um `.zip` não assinado em `dist/` com o app empacotado (via
-`electron-builder`).
+Gera dois artefatos em `dist/`, ambos não assinados (sem certificado de
+assinatura de código — abrir qualquer um dispara aviso do SmartScreen na
+primeira execução, não tem como evitar sem assinar):
+
+- `Claude Monitor-Setup-<versão>.exe` — instalador NSIS com assistente,
+  atalho no Menu Iniciar e na área de trabalho, e entrada em
+  "Aplicativos instalados" (desinstalação normal pelo Windows).
+- `Claude Monitor-<versão>-win.zip` — versão portátil, sem instalar nada,
+  só extrair e rodar.
 
 **Linux** (`.deb` + AppImage): precisa rodar de dentro de um Linux de
 verdade — WSL com uma distro Ubuntu, uma VM, ou CI. O `electron-builder`
