@@ -20,8 +20,11 @@
 //     existente em vez de subir um segundo processo (dois pollers de uso
 //     concorrentes, duas janelas sobrepostas).
 //   - resize usa um único `setBounds` atômico em vez de `setContentSize` +
-//     `setPosition` separados — evita a janela transparente deixar uma
-//     região "fantasma" do tamanho antigo, clicável mas invisível.
+//     `setPosition` separados (mais correto de qualquer forma), e os pisos
+//     de tamanho mínimo aceitam o estado colapsado (140x~200) — um piso
+//     maior que isso forçava a janela a nunca encolher de verdade ao
+//     minimizar, deixando uma área transparente-mas-real por cima do que
+//     está atrás, clicável.
 const { app, BrowserWindow, ipcMain, screen, Notification, shell, session, Tray, Menu, nativeImage } =
   require('electron')
 const path = require('node:path')
@@ -316,12 +319,15 @@ app.on('web-contents-created', (_e, contents) => {
 
 ipcMain.on('resize', (event, w, h) => {
   if (!fromOwnWindow(event)) return
-  const width = Math.min(400, Math.max(280, Math.round(Number(w) || 0)))
-  const height = Math.min(900, Math.max(200, Math.round(Number(h) || 0)))
+  // Pisos só como guarda contra valor inválido/zero/negativo vindo do IPC —
+  // não são um mínimo de design. O menor estado real (colapsado) pede
+  // 140x~200; um piso de 280 aqui forçava a janela a nunca encolher de
+  // verdade, deixando a área "extra" (transparente, mas ainda parte da
+  // janela real) clicável por cima do que está atrás. Não era bug do
+  // Windows — era este clamp maior que o menor tamanho válido do app.
+  const width = Math.min(400, Math.max(130, Math.round(Number(w) || 0)))
+  const height = Math.min(900, Math.max(150, Math.round(Number(h) || 0)))
   const { workAreaSize } = screen.getPrimaryDisplay()
-  // Um único setBounds atômico — setContentSize + setPosition separados
-  // podiam deixar uma região "fantasma" do tamanho antigo, invisível mas
-  // ainda clicável, numa janela transparente/sem moldura no Windows.
   win.setBounds({
     x: workAreaSize.width - width - 20,
     y: workAreaSize.height - height - 20,
