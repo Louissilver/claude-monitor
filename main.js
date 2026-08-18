@@ -11,7 +11,19 @@
 //     com um patch vindo do renderer.
 //   - todo handler IPC confere que o evento veio do frame principal da
 //     própria janela (defesa contra um <iframe> ou popup hipotético).
-const { app, BrowserWindow, ipcMain, screen, Notification, shell, session } = require('electron')
+//
+// Comportamento de janela (usabilidade, não segurança):
+//   - ícone na bandeja: fechar (X) esconde em vez de matar o processo —
+//     sem isso não existe como reabrir o widget sem achar o atalho de novo,
+//     já que a janela não aparece na barra de tarefas (skipTaskbar).
+//   - single-instance lock: abrir o app com uma instância já rodando foca a
+//     existente em vez de subir um segundo processo (dois pollers de uso
+//     concorrentes, duas janelas sobrepostas).
+//   - resize usa um único `setBounds` atômico em vez de `setContentSize` +
+//     `setPosition` separados — evita a janela transparente deixar uma
+//     região "fantasma" do tamanho antigo, clicável mas invisível.
+const { app, BrowserWindow, ipcMain, screen, Notification, shell, session, Tray, Menu, nativeImage } =
+  require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 const os = require('node:os')
@@ -21,6 +33,14 @@ const platform = require('./platform')
 
 // Precisa ser chamado antes de app estar pronto (e antes de qualquer janela).
 app.enableSandbox()
+
+// Só uma instância roda por vez — a segunda só foca a primeira e sai.
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => showWindow())
+}
 
 const DATA_DIR = process.env.CLAUDE_CONFIG_DIR
   ? path.join(process.env.CLAUDE_CONFIG_DIR, 'claude-monitor')
@@ -45,6 +65,87 @@ const CSP =
 let win
 let pollTimer
 let config
+let tray = null
+// true só a partir de um quit "de verdade" (menu do tray, SO desligando).
+// Sem isso, fechar a janela (X) mataria o processo — é para evitar isso
+// que o handler de 'close' abaixo intercepta e esconde em vez de fechar.
+let quitting = false
+app.on('before-quit', () => {
+  quitting = true
+})
+
+function showWindow() {
+  if (!win || win.isDestroyed()) return
+  win.show()
+  win.focus()
+}
+function hideWindow() {
+  if (!win || win.isDestroyed()) return
+  win.hide()
+}
+// Reposiciona no canto inferior direito do monitor primário atual — mesmo
+// cálculo do posicionamento inicial. Serve de rede de segurança manual caso
+// a janela fique fora de qualquer tela visível (ex.: monitor desconectado).
+function centerWindow() {
+  if (!win || win.isDestroyed()) return
+  const { workAreaSize } = screen.getPrimaryDisplay()
+  const [width, height] = win.getContentSize()
+  win.setBounds({
+    x: workAreaSize.width - width - 20,
+    y: workAreaSize.height - height - 20,
+    width,
+    height,
+  })
+}
+
+// Ícone da bandeja gerado em runtime (buffer de pixels), sem depender de
+// nenhum asset de design que ainda não existe no projeto — ver ADR-002.
+// Quadrado com cantos arredondados na cor terracota do próprio bichinho
+// (--pixel em style.css), só para ter algo reconhecível na bandeja.
+function buildTrayIcon() {
+  const size = 16
+  const [r, g, b] = [0xd5, 0x76, 0x58]
+  const buf = Buffer.alloc(size * size * 4) // BGRA, formato esperado pelo nativeImage
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4
+      const cut =
+        (x < 2 && y < 2 && x + y < 1) ||
+        (x >= size - 2 && y < 2 && size - 1 - x + y < 1) ||
+        (x < 2 && y >= size - 2 && x + (size - 1 - y) < 1) ||
+        (x >= size - 2 && y >= size - 2 && size - 1 - x + (size - 1 - y) < 1)
+      buf[i] = b
+      buf[i + 1] = g
+      buf[i + 2] = r
+      buf[i + 3] = cut ? 0 : 255
+    }
+  }
+  return nativeImage.createFromBuffer(buf, { width: size, height: size })
+}
+
+function createTray() {
+  tray = new Tray(buildTrayIcon())
+  tray.setToolTip('Claude Monitor')
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Abrir', click: showWindow },
+      {
+        label: 'Configurações',
+        click: () => {
+          showWindow()
+          if (win && !win.isDestroyed()) win.webContents.send('open-settings')
+        },
+      },
+      { label: 'Centralizar posição', click: centerWindow },
+      { type: 'separator' },
+      { label: 'Sair', click: () => app.quit() },
+    ]),
+  )
+  tray.on('click', () => {
+    if (win && win.isVisible()) hideWindow()
+    else showWindow()
+  })
+}
 
 function loadConfig() {
   const defaults = {
@@ -167,6 +268,15 @@ function createWindow() {
 
   win.setAlwaysOnTop(true, 'floating')
 
+  // Fechar (X, Alt+F4) esconde para a bandeja em vez de matar o processo —
+  // sem isso não haveria como reabrir o widget (skipTaskbar tira ele da
+  // barra de tarefas). Sair de verdade só existe pelo menu do tray.
+  win.on('close', (event) => {
+    if (quitting) return
+    event.preventDefault()
+    hideWindow()
+  })
+
   // Nunca deixamos o renderer navegar para outro lugar ou abrir popups —
   // ele só existe para carregar o index.html local uma vez.
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
@@ -208,9 +318,16 @@ ipcMain.on('resize', (event, w, h) => {
   if (!fromOwnWindow(event)) return
   const width = Math.min(400, Math.max(280, Math.round(Number(w) || 0)))
   const height = Math.min(900, Math.max(200, Math.round(Number(h) || 0)))
-  win.setContentSize(width, height)
   const { workAreaSize } = screen.getPrimaryDisplay()
-  win.setPosition(workAreaSize.width - width - 20, workAreaSize.height - height - 20)
+  // Um único setBounds atômico — setContentSize + setPosition separados
+  // podiam deixar uma região "fantasma" do tamanho antigo, invisível mas
+  // ainda clicável, numa janela transparente/sem moldura no Windows.
+  win.setBounds({
+    x: workAreaSize.width - width - 20,
+    y: workAreaSize.height - height - 20,
+    width,
+    height,
+  })
 })
 
 // URL fixa, sem entrada do renderer — nada a validar além de ser esta constante.
@@ -333,21 +450,27 @@ ipcMain.on('save-config', (event, patch) => {
   platform.applyAutoStart(config)
 })
 
+// Botão "fechar" da UI: esconde para a bandeja, não mata o processo — sair
+// de verdade só existe pelo menu do tray ("Sair"), que passa por
+// 'before-quit' e por isso o handler de 'close' da janela deixa passar.
 ipcMain.on('quit', (event) => {
   if (!fromOwnWindow(event)) return
-  app.quit()
+  hideWindow()
 })
 
-app.whenReady().then(() => {
-  if (process.platform === 'win32') app.setAppUserModelId('com.local.claude-monitor')
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] },
+if (gotSingleInstanceLock) {
+  app.whenReady().then(() => {
+    if (process.platform === 'win32') app.setAppUserModelId('com.local.claude-monitor')
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] },
+      })
     })
+    createWindow() // define `config`
+    createTray()
+    platform.applyAutoStart(config)
   })
-  createWindow() // define `config`
-  platform.applyAutoStart(config)
-})
+}
 
 app.on('window-all-closed', () => {
   if (pollTimer) clearInterval(pollTimer)

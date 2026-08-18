@@ -714,6 +714,8 @@ function openSettings() {
   fitSize()
 }
 el('gear').addEventListener('click', openSettings)
+// menu "Configurações" da bandeja pede pra abrir direto nas configurações
+window.api.onOpenSettings(openSettings)
 // the "connect" placeholder jumps straight to settings
 el('limits-connect').addEventListener('click', openSettings)
 // custom number steppers (▲ / ▼)

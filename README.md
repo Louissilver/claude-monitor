@@ -46,6 +46,7 @@ em [`docs/ADR-001`](docs/ADR-001-claude-monitor-seguro.md).
 - 🔔 Alertas configuráveis por notificação nativa do Windows ao cruzar limites de uso.
 - 🔒 Funciona 100% offline por padrão, lendo só os logs locais do Claude Code — conectar a conta é opcional.
 - 🪟 Widget flutuante, sem moldura, sempre visível, com modo minimizado.
+- 🖥️ Ícone na bandeja do sistema — fechar esconde, não mata o processo; só uma instância roda por vez.
 - 🚀 Inicialização automática ao ligar/entrar na sessão (configurável), em Windows e Linux.
 - 🐧 Suporte a Linux/Ubuntu com pacote `.deb` e AppImage (ver [ADR-002](docs/ADR-002-suporte-linux.md)).
 
@@ -133,9 +134,22 @@ sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
 npm start
 ```
 
-O widget abre ancorado no canto inferior direito da tela. Arraste-o pelo
-corpo para reposicionar, clique duas vezes (ou no botão `–`) para
-minimizar, e use a engrenagem para abrir as configurações.
+O widget abre ancorado no canto inferior direito da tela, com um ícone na
+bandeja do sistema. Arraste-o pelo corpo para reposicionar, clique duas
+vezes (ou no botão `–`) para minimizar, e use a engrenagem para abrir as
+configurações.
+
+O botão **×** esconde o widget para a bandeja — não fecha o processo. Pelo
+ícone da bandeja: clique para mostrar/esconder, botão direito abre um menu
+com **Abrir**, **Configurações**, **Centralizar posição** (recupera a
+janela se ela ficar fora da tela, ex. após desconectar um monitor) e
+**Sair** — só esse último realmente encerra o app. Abrir o app com uma
+instância já rodando só foca a existente, não duplica.
+
+No Linux, o ícone da bandeja depende do ambiente de desktop suportar
+`StatusNotifierItem`/AppIndicator — funciona out-of-the-box no Ubuntu
+(GNOME já vem com a extensão habilitada); em outras distros/DEs pode não
+aparecer dependendo da configuração.
 
 ## Conectar a conta Claude (opcional)
 
