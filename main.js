@@ -87,8 +87,9 @@ function hideWindow() {
   win.hide()
 }
 // Reposiciona no canto inferior direito do monitor primário atual — mesmo
-// cálculo do posicionamento inicial. Serve de rede de segurança manual caso
-// a janela fique fora de qualquer tela visível (ex.: monitor desconectado).
+// cálculo do posicionamento inicial. Usado pelo "Centralizar posição" do
+// tray (rede de segurança se a janela ficar fora de qualquer tela visível)
+// e pelo "Restaurar padrões" das configurações.
 function centerWindow() {
   if (!win || win.isDestroyed()) return
   const { workAreaSize } = screen.getPrimaryDisplay()
@@ -348,6 +349,12 @@ ipcMain.on('resize', (event, w, h) => {
 ipcMain.on('open-usage', (event) => {
   if (!fromOwnWindow(event)) return
   shell.openExternal(USAGE_PAGE_URL)
+})
+
+// Disparado pelo botão "Restaurar padrões" das configurações.
+ipcMain.on('reset-position', (event) => {
+  if (!fromOwnWindow(event)) return
+  centerWindow()
 })
 
 // --- polling de usage via OAuth ---------------------------------------------

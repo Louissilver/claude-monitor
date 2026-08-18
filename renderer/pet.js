@@ -723,6 +723,7 @@ window.api.onOpenSettings(openSettings)
 el('set-reset-defaults').addEventListener('click', () => {
   populateSettings(currentConfig.defaults)
   refreshSaveDirty()
+  window.api.resetPosition() // reposiciona já — posição nunca foi algo "salvo"
 })
 // the "connect" placeholder jumps straight to settings
 el('limits-connect').addEventListener('click', openSettings)
