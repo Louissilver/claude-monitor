@@ -99,6 +99,30 @@ Confira a árvore por vulnerabilidades conhecidas antes de usar:
 npm audit
 ```
 
+### Instalação rápida (Ubuntu)
+
+Dois scripts de um comando só, com modelos de confiança diferentes — leia
+antes de escolher:
+
+```bash
+# builda do código-fonte na sua máquina — nenhum binário pré-compilado é
+# baixado ou executado. Mais lento, mesma garantia de sempre.
+curl -fsSL https://raw.githubusercontent.com/Louissilver/claude-monitor/main/install.sh | bash
+```
+
+```bash
+# baixa o .deb já pronto da última Release no GitHub e verifica o checksum
+# SHA256 antes de instalar qualquer coisa — aborta se não bater.
+curl -fsSL https://raw.githubusercontent.com/Louissilver/claude-monitor/main/install-quick.sh | bash
+```
+
+O `install-quick.sh` é mais rápido, mas depende de confiar no
+[pipeline de release](.github/workflows/release.yml) que gera os binários —
+sem certificado de assinatura de código, a garantia real é o checksum
+publicado junto (`SHA256SUMS` na Release), calculado pelo próprio GitHub
+Actions e nunca tocado à mão. Se preferir builda do zero (mesmo modelo de
+confiança de clonar e compilar manualmente), use `install.sh`.
+
 ### Problemas comuns
 
 **`Error [ERR_REQUIRE_ESM]` no `npm run postinstall-electron`** — Node
@@ -228,6 +252,7 @@ controles:
 - **IPC com allowlist**: toda configuração vinda do renderer passa por validação de tipo/faixa antes de tocar o disco.
 - **Sem self-update**: atualizar é `git pull` manual, revisado por você.
 - **Cadeia de suprimentos**: versões exatas, `npm ci` + `ignore-scripts`.
+- **Release só em tag manual** (nunca em push automático), com checksum SHA256 publicado — `install-quick.sh` recusa instalar se não bater.
 
 Encontrou uma falha de segurança? Não abra uma issue pública — veja
 [Contribuindo](#contribuindo) para como reportar de forma responsável.

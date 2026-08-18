@@ -1,0 +1,5 @@
+# Scripts de shell e workflows precisam de LF sempre — CRLF no shebang
+# (`#!/usr/bin/env bash\r`) quebra `curl | bash` no Linux. Não depender do
+# core.autocrlf de quem commita.
+*.sh text eol=lf
+.github/**/*.yml text eol=lf

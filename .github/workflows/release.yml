@@ -1,0 +1,104 @@
+name: Release
+
+# Dispara só em tag de versão (ex.: v1.2.3), empurrada manualmente pelo
+# mantenedor — nada de release automático a cada push, nem semantic-release
+# (ADR-001, R4: sem automação de update; um tag de release é um ato
+# deliberado, não uma consequência de commitar).
+#
+# Builda em cada plataforma suportada, calcula SHA256 de cada artefato e
+# publica tudo — instaláveis + um SHA256SUMS combinado — como Release no
+# GitHub. install-quick.sh consome esses artefatos e verifica o checksum
+# antes de instalar qualquer coisa.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # só o necessário pra criar a Release
+
+jobs:
+  check-version:
+    name: Confere se a tag bate com package.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compara tag x package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag v$TAG não bate com a versão em package.json ($PKG)." >&2
+            exit 1
+          fi
+
+  build:
+    name: Build ${{ matrix.artifact }}
+    needs: check-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            dist_script: dist:win
+            artifact: windows
+          - os: ubuntu-latest
+            dist_script: dist:linux
+            artifact: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # .npmrc tem ignore-scripts=true (ADR-001, R7) — bloqueia o
+      # postinstall do próprio electron também, roda-se manual a seguir.
+      - run: npm ci
+      - run: npm run postinstall-electron
+      - run: npm run ${{ matrix.dist_script }}
+
+      - name: Calcula SHA256 dos artefatos
+        shell: bash
+        run: |
+          cd dist
+          files=$(find . -maxdepth 1 -type f \( -name "*.exe" -o -name "*.zip" -o -name "*.deb" -o -name "*.AppImage" \))
+          if [ -z "$files" ]; then
+            echo "Nenhum artefato encontrado em dist/." >&2
+            exit 1
+          fi
+          sha256sum $files > "SHA256SUMS-${{ matrix.artifact }}.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.artifact }}
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.deb
+            dist/*.AppImage
+            dist/SHA256SUMS-*.txt
+          if-no-files-found: error
+
+  publish:
+    name: Publica a Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: Junta os checksums num arquivo só
+        run: |
+          cd dist
+          cat SHA256SUMS-*.txt > SHA256SUMS
+          rm SHA256SUMS-*.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
