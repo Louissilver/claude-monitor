@@ -21,9 +21,58 @@ arquivos que tocam credenciais, rede e IPC — foram escritos do zero com essas
 falhas fechadas por construção. O raciocínio completo, risco por risco, está
 em [`docs/ADR-001`](docs/ADR-001-claude-monitor-seguro.md).
 
+## Downloads
+
+[![Última release](https://img.shields.io/github/v/release/Louissilver/claude-monitor?label=%C3%BAltima%20release)](https://github.com/Louissilver/claude-monitor/releases/latest)
+
+Binários buildados não ficam commitados neste repositório — só existem como
+anexo das [Releases](https://github.com/Louissilver/claude-monitor/releases),
+geradas pelo [pipeline de release](.github/workflows/release.yml) a partir
+de uma tag de versão. Cada release inclui um `SHA256SUMS` — confira antes de
+rodar qualquer coisa que baixar (nenhum artefato tem assinatura de código,
+não há certificado envolvido):
+
+**Windows** — baixe `Claude Monitor-Setup-<versão>.exe` (instalador,
+com atalhos e desinstalador) ou o `.zip` (portátil) da
+[última release](https://github.com/Louissilver/claude-monitor/releases/latest).
+Confira o checksum antes de rodar:
+
+```powershell
+Get-FileHash ".\Claude Monitor-Setup-<versão>.exe" -Algorithm SHA256
+```
+
+Compare o resultado com a linha correspondente em `SHA256SUMS` (mesma
+release). Sem certificado de assinatura, o Windows SmartScreen avisa na
+primeira execução — esperado, não indica problema.
+
+**Linux/Ubuntu** — três opções, do mais rápido ao mais verificável:
+
+```bash
+# baixa o .deb pronto + verifica o checksum SHA256 antes de instalar
+curl -fsSL https://raw.githubusercontent.com/Louissilver/claude-monitor/main/install-quick.sh | bash
+```
+
+```bash
+# builda do código-fonte — nenhum binário pré-compilado baixado/executado
+curl -fsSL https://raw.githubusercontent.com/Louissilver/claude-monitor/main/install.sh | bash
+```
+
+Ou baixe `.deb`/`.AppImage` manualmente da
+[última release](https://github.com/Louissilver/claude-monitor/releases/latest)
+e confira o checksum você mesmo antes de instalar:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing
+sudo apt install ./Claude*.deb
+```
+
+Detalhes de cada caminho (o que cada script faz, por que existem dois) em
+[Instalação rápida (Ubuntu)](#instalação-rápida-ubuntu).
+
 ## Índice
 
 - [Funcionalidades](#funcionalidades)
+- [Downloads](#downloads)
 - [Por que este projeto existe](#por-que-este-projeto-existe)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
