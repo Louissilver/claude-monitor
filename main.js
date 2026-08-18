@@ -327,13 +327,15 @@ ipcMain.on('resize', (event, w, h) => {
   // Windows — era este clamp maior que o menor tamanho válido do app.
   const width = Math.min(400, Math.max(130, Math.round(Number(w) || 0)))
   const height = Math.min(900, Math.max(150, Math.round(Number(h) || 0)))
-  const { workAreaSize } = screen.getPrimaryDisplay()
-  win.setBounds({
-    x: workAreaSize.width - width - 20,
-    y: workAreaSize.height - height - 20,
-    width,
-    height,
-  })
+  // Mantém a posição de onde o usuário arrastou a janela — colapsar/expandir
+  // (que também passa por aqui) não deve teleportar de volta pro canto.
+  // Só clampa pra não deixar vazar pra fora da área útil da tela, caso o
+  // novo tamanho não caiba mais onde a janela estava.
+  const { x: wx, y: wy } = win.getBounds()
+  const { workArea } = screen.getPrimaryDisplay()
+  const x = Math.min(Math.max(wx, workArea.x), workArea.x + workArea.width - width)
+  const y = Math.min(Math.max(wy, workArea.y), workArea.y + workArea.height - height)
+  win.setBounds({ x, y, width, height })
 })
 
 // URL fixa, sem entrada do renderer — nada a validar além de ser esta constante.
