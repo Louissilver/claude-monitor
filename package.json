@@ -55,9 +55,7 @@
       "category": "Utility",
       "maintainer": "Louissilver",
       "synopsis": "Widget desktop que monitora o uso do Claude",
-      "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
-      "desktopName": "claude-monitor.desktop",
-      "syncDesktopName": true
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
     },
     "deb": {
       "depends": ["libnotify4", "libsecret-1-0"]
