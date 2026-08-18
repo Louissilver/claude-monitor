@@ -7,8 +7,8 @@
   "scripts": {
     "start": "electron .",
     "postinstall-electron": "node node_modules/electron/install.js",
-    "dist:win": "electron-builder --win nsis zip",
-    "dist:linux": "electron-builder --linux deb AppImage"
+    "dist:win": "electron-builder --win nsis zip --publish never",
+    "dist:linux": "electron-builder --linux deb AppImage --publish never"
   },
   "license": "MIT",
   "author": "Louissilver",
@@ -27,6 +27,7 @@
   "build": {
     "appId": "com.local.claude-monitor",
     "productName": "Claude Monitor",
+    "publish": null,
     "directories": {
       "output": "dist"
     },
@@ -54,7 +55,9 @@
       "category": "Utility",
       "maintainer": "Louissilver",
       "synopsis": "Widget desktop que monitora o uso do Claude",
-      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
+      "desktopName": "claude-monitor.desktop",
+      "syncDesktopName": true
     },
     "deb": {
       "depends": ["libnotify4", "libsecret-1-0"]
