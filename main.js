@@ -150,20 +150,24 @@ function createTray() {
   })
 }
 
+// Fonte única dos valores padrão — reaproveitada por loadConfig() e mandada
+// pro renderer (via configForRenderer) para o botão "Restaurar padrões" do
+// painel de configurações não duplicar esses números no lado do renderer.
+const DEFAULT_CONFIG = {
+  plan: 'max5x',
+  startAtLogin: true,
+  sessionTokenBudget: 630000000,
+  weeklyTokenBudget: 3450000000,
+  weeklyAnchorIso: null,
+  alerts: true,
+  alertThresholds: [80, 95],
+  fireThreshold: 90,
+  pollIntervalMs: 4000,
+  activeThresholdMs: 20000,
+  sleepThresholdMs: 300000,
+}
+
 function loadConfig() {
-  const defaults = {
-    plan: 'max5x',
-    startAtLogin: true,
-    sessionTokenBudget: 630000000,
-    weeklyTokenBudget: 3450000000,
-    weeklyAnchorIso: null,
-    alerts: true,
-    alertThresholds: [80, 95],
-    fireThreshold: 90,
-    pollIntervalMs: 4000,
-    activeThresholdMs: 20000,
-    sleepThresholdMs: 300000,
-  }
   for (const p of [EXTERNAL_CONFIG, path.join(__dirname, 'config.json')]) {
     try {
       const raw = JSON.parse(fs.readFileSync(p, 'utf8'))
@@ -171,10 +175,10 @@ function loadConfig() {
       if (raw.startAtLogin === undefined && typeof raw.startWithWindows === 'boolean') {
         raw.startAtLogin = raw.startWithWindows
       }
-      return { ...defaults, ...raw }
+      return { ...DEFAULT_CONFIG, ...raw }
     } catch {}
   }
-  return defaults
+  return { ...DEFAULT_CONFIG }
 }
 
 // --- validação da config salva pelo renderer (fecha R6) ---------------------
@@ -234,11 +238,13 @@ function fromOwnWindow(event) {
   return !!win && !win.isDestroyed() && event.senderFrame === win.webContents.mainFrame
 }
 
-// `platform` não é persistido em disco (fica fora de CONFIG_SCHEMA, então
-// nunca volta do renderer) — só informa a UI para trocar o texto do
-// checkbox de autostart ("com o Windows" vs. "ao entrar na sessão").
+// `platform` e `defaults` não são persistidos em disco (ficam fora de
+// CONFIG_SCHEMA, então nunca voltam do renderer): `platform` só informa a UI
+// para trocar o texto do checkbox de autostart ("com o Windows" vs. "ao
+// entrar na sessão"); `defaults` alimenta o botão "Restaurar padrões" sem
+// duplicar esses valores no renderer.
 function configForRenderer(cfg) {
-  return { ...cfg, platform: process.platform }
+  return { ...cfg, platform: process.platform, defaults: DEFAULT_CONFIG }
 }
 
 function createWindow() {

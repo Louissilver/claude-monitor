@@ -697,25 +697,33 @@ function clearSaveDirty() {
   settingsBaseline = snapshotSettings()
   el('set-save').classList.remove('dirty')
 }
-function populateSettings() {
-  const c = currentConfig || {}
+// `source` deixa reaproveitar isso tanto pra popular do config salvo
+// (openSettings) quanto do config padrão (botão "Restaurar padrões").
+function populateSettings(source) {
+  const c = source || currentConfig || {}
   el('set-autostart').checked = c.startAtLogin !== false
   el('set-alerts').checked = c.alerts !== false
   const th = c.alertThresholds || [80, 95]
   el('set-t1').value = th[0] != null ? th[0] : 80
   el('set-t2').value = th[1] != null ? th[1] : 95
   el('set-fire').value = c.fireThreshold != null ? c.fireThreshold : 90
-  clearSaveDirty() // fields now match the saved config
 }
 function openSettings() {
   document.body.classList.remove('collapsed')
-  populateSettings()
+  populateSettings(currentConfig)
+  clearSaveDirty() // fields now match the saved config
   document.body.classList.add('settings-open')
   fitSize()
 }
 el('gear').addEventListener('click', openSettings)
 // menu "Configurações" da bandeja pede pra abrir direto nas configurações
 window.api.onOpenSettings(openSettings)
+// só preenche os campos com o padrão — não salva sozinho, o Salvar acende
+// (fica "sujo") igual a qualquer outra edição, precisa confirmar
+el('set-reset-defaults').addEventListener('click', () => {
+  populateSettings(currentConfig.defaults)
+  refreshSaveDirty()
+})
 // the "connect" placeholder jumps straight to settings
 el('limits-connect').addEventListener('click', openSettings)
 // custom number steppers (▲ / ▼)
