@@ -41,21 +41,22 @@
       "renderer/**"
     ],
     "win": {
-      "target": ["nsis", "zip"]
+      "target": ["nsis", "zip"],
+      "artifactName": "ClaudeMonitor-${version}-win-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "ClaudeMonitor-Setup-${version}.${ext}"
     },
     "linux": {
       "target": ["deb", "AppImage"],
       "category": "Utility",
       "maintainer": "Louissilver",
       "synopsis": "Widget desktop que monitora o uso do Claude",
-      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+      "artifactName": "ClaudeMonitor-${version}-linux-${arch}.${ext}"
     },
     "deb": {
       "depends": ["libnotify4", "libsecret-1-0"]

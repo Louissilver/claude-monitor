@@ -55,7 +55,15 @@ curl -fsSL "$DEB_URL" -o "$TMP/$DEB_NAME"
 curl -fsSL "$SUMS_URL" -o "$TMP/SHA256SUMS"
 
 echo "==> Verificando checksum..."
-if ! (cd "$TMP" && grep -F " $DEB_NAME" SHA256SUMS | sha256sum -c -); then
+# Casa pela extensão, não pelo nome exato do arquivo — o GitHub sanitiza
+# nomes de asset com espaço no upload (vira ponto), então o nome real
+# baixado pode não bater byte a byte com o que está escrito dentro do
+# SHA256SUMS. Só existe uma linha .deb ali, então extrair o hash dessa
+# linha e comparar direto com o hash do arquivo que baixamos é mais
+# robusto do que tentar casar strings de nome de arquivo.
+EXPECTED_HASH="$(grep -E '\.deb$' "$TMP/SHA256SUMS" | awk '{print $1}' | head -1)"
+ACTUAL_HASH="$(sha256sum "$TMP/$DEB_NAME" | awk '{print $1}')"
+if [ -z "$EXPECTED_HASH" ] || [ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]; then
   echo "Checksum não confere — o arquivo pode estar corrompido ou adulterado." >&2
   echo "Instalação abortada. Nada foi instalado." >&2
   exit 1

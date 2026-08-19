@@ -32,13 +32,13 @@ de uma tag de versão. Cada release inclui um `SHA256SUMS` — confira antes de
 rodar qualquer coisa que baixar (nenhum artefato tem assinatura de código,
 não há certificado envolvido):
 
-**Windows** — baixe `Claude Monitor-Setup-<versão>.exe` (instalador,
+**Windows** — baixe `ClaudeMonitor-Setup-<versão>.exe` (instalador,
 com atalhos e desinstalador) ou o `.zip` (portátil) da
 [última release](https://github.com/Louissilver/claude-monitor/releases/latest).
 Confira o checksum antes de rodar:
 
 ```powershell
-Get-FileHash ".\Claude Monitor-Setup-<versão>.exe" -Algorithm SHA256
+Get-FileHash ".\ClaudeMonitor-Setup-<versão>.exe" -Algorithm SHA256
 ```
 
 Compare o resultado com a linha correspondente em `SHA256SUMS` (mesma
@@ -265,10 +265,10 @@ Gera dois artefatos em `dist/`, ambos não assinados (sem certificado de
 assinatura de código — abrir qualquer um dispara aviso do SmartScreen na
 primeira execução, não tem como evitar sem assinar):
 
-- `Claude Monitor-Setup-<versão>.exe` — instalador NSIS com assistente,
+- `ClaudeMonitor-Setup-<versão>.exe` — instalador NSIS com assistente,
   atalho no Menu Iniciar e na área de trabalho, e entrada em
   "Aplicativos instalados" (desinstalação normal pelo Windows).
-- `Claude Monitor-<versão>-win.zip` — versão portátil, sem instalar nada,
+- `ClaudeMonitor-<versão>-win-x64.zip` — versão portátil, sem instalar nada,
   só extrair e rodar.
 
 **Linux** (`.deb` + AppImage): precisa rodar de dentro de um Linux de
