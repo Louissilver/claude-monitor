@@ -276,7 +276,8 @@ body.model-detail-open #model-detail {
   display: flex;
   margin-top: 10px;
 }
-#chart-close {
+#chart-close,
+#model-detail-close {
   flex: 1;
   border: none;
   border-radius: 8px;
@@ -288,7 +289,8 @@ body.model-detail-open #model-detail {
   color: var(--text);
   transition: background 0.18s;
 }
-#chart-close:hover {
+#chart-close:hover,
+#model-detail-close:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
