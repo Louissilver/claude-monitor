@@ -415,16 +415,62 @@ function renderModels(list) {
     val.textContent = usd ? `${fmtTokens(m.tokens)} · ${usd}` : fmtTokens(m.tokens)
 
     row.append(name, barWrap, val)
+    row.addEventListener('click', () => openModelDetail(m))
     box.appendChild(row)
   }
   if (!top.length) {
     const empty = document.createElement('div')
-    empty.className = 'mrow'
+    empty.className = 'mrow mrow-empty'
     empty.style.opacity = '.5'
     empty.textContent = 'sem atividade'
     box.appendChild(empty)
   }
 }
+
+// painel de detalhe por tipo de token (entrada/saída/cache), aberto ao
+// clicar num modelo em "por modelo"
+function renderModelDetail(m) {
+  el('model-detail-title').textContent = m.label
+  const rows = el('model-detail-rows')
+  clearChildren(rows)
+  const items = [
+    ['Entrada', m.input, m.cost && m.cost.input],
+    ['Saída', m.output, m.cost && m.cost.output],
+    ['Cache · leitura', m.cacheRead, m.cost && m.cost.cacheRead],
+    ['Cache · escrita', m.cacheWrite, m.cost && m.cost.cacheWrite],
+  ]
+  for (const [label, tokens, cost] of items) {
+    const row = document.createElement('div')
+    row.className = 'mdrow'
+    const name = document.createElement('span')
+    name.textContent = label
+    const val = document.createElement('span')
+    const usd = fmtUsd(cost)
+    val.textContent = usd ? `${fmtTokens(tokens)} · ${usd}` : fmtTokens(tokens)
+    row.append(name, val)
+    rows.appendChild(row)
+  }
+  const total = document.createElement('div')
+  total.className = 'mdrow mdrow-total'
+  const totalName = document.createElement('span')
+  totalName.textContent = 'Total · 7 dias'
+  const totalVal = document.createElement('span')
+  const totalUsd = fmtUsd(m.costUsd)
+  totalVal.textContent = totalUsd ? `${fmtTokens(m.tokens)} · ${totalUsd}` : fmtTokens(m.tokens)
+  total.append(totalName, totalVal)
+  rows.appendChild(total)
+}
+function openModelDetail(m) {
+  document.body.classList.remove('collapsed', 'settings-open', 'chart-open')
+  document.body.classList.add('model-detail-open')
+  renderModelDetail(m)
+  fitSize()
+}
+function closeModelDetail() {
+  document.body.classList.remove('model-detail-open')
+  fitSize()
+}
+el('model-detail-close').addEventListener('click', closeModelDetail)
 
 // gráfico de linha do uso diário (30 dias) — SVG desenhado na mão, sem
 // biblioteca (o projeto não tem dependência de runtime nenhuma, ver README)
@@ -789,7 +835,7 @@ function populateSettings(source) {
   el('set-fire').value = c.fireThreshold != null ? c.fireThreshold : 90
 }
 function openSettings() {
-  document.body.classList.remove('collapsed', 'chart-open')
+  document.body.classList.remove('collapsed', 'chart-open', 'model-detail-open')
   populateSettings(currentConfig)
   clearSaveDirty() // fields now match the saved config
   document.body.classList.add('settings-open')
@@ -801,7 +847,7 @@ window.api.onOpenSettings(openSettings)
 
 // gráfico de uso diário — abre clicando no mapa de calor
 function openChart() {
-  document.body.classList.remove('collapsed', 'settings-open')
+  document.body.classList.remove('collapsed', 'settings-open', 'model-detail-open')
   document.body.classList.add('chart-open')
   renderChart(lastData?.days30 || [])
   fitSize()

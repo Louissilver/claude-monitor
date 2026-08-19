@@ -186,7 +186,9 @@ body.collapsed #account-chip {
 body.settings-open #content,
 body.settings-open #mini,
 body.chart-open #content,
-body.chart-open #mini {
+body.chart-open #mini,
+body.model-detail-open #content,
+body.model-detail-open #mini {
   display: none;
 }
 body.settings-open #settings {
@@ -201,6 +203,39 @@ body.settings-open #settings {
 }
 body.chart-open #chart {
   display: block;
+}
+
+/* detalhe por tipo de token de um modelo — mesmo padrão do gráfico */
+#model-detail {
+  display: none;
+  margin-top: 8px;
+  -webkit-app-region: no-drag;
+}
+body.model-detail-open #model-detail {
+  display: block;
+}
+.mdrow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text);
+  padding: 5px 0;
+  border-bottom: 0.5px solid var(--hair);
+}
+.mdrow span:first-child {
+  color: var(--muted);
+}
+.mdrow span:last-child {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.mdrow-total {
+  border-bottom: none;
+  margin-top: 2px;
+  font-weight: 700;
+}
+.mdrow-total span:first-child {
+  color: var(--text);
 }
 .chart-title {
   font-size: 12px;
@@ -690,9 +725,10 @@ body.collapsed #stage {
 body.collapsed #pet {
   -webkit-app-region: drag;
 }
-/* hide minimize while settings/chart are open (toggling it bugs the layout) */
+/* hide minimize while settings/chart/model-detail are open (toggling it bugs the layout) */
 body.settings-open #min,
-body.chart-open #min {
+body.chart-open #min,
+body.model-detail-open #min {
   display: none;
 }
 
@@ -1665,6 +1701,19 @@ body.state-tired #status-text {
   font-size: 11px;
   color: var(--text);
   margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.15s;
+  -webkit-app-region: no-drag;
+}
+.mrow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.mrow.mrow-empty {
+  cursor: default;
+}
+.mrow.mrow-empty:hover {
+  background: none;
 }
 .mrow .mname {
   flex: 0 0 64px;

@@ -54,15 +54,19 @@ const PRICING_USD_PER_MTOK = {
   Haiku: { input: 0.8, output: 4, cacheWrite: 1, cacheRead: 0.08 },
 }
 
-function costOf(usage, family) {
+// Decompõe o custo em $ por tipo de token (entrada/saída/cache leitura/
+// cache escrita) a partir de totais já agregados — computado uma vez por
+// modelo em getUsage(), não por entrada, já que custo = tokens × preço é
+// linear e soma direto. null se a família não tem preço conhecido.
+function costBreakdown(totals, family) {
   const p = PRICING_USD_PER_MTOK[family]
   if (!p) return null
-  const u = usage || {}
-  const input = u.input_tokens || 0
-  const output = u.output_tokens || 0
-  const cacheRead = u.cache_read_input_tokens || 0
-  const cacheWrite = u.cache_creation_input_tokens || 0
-  return (input * p.input + output * p.output + cacheRead * p.cacheRead + cacheWrite * p.cacheWrite) / 1e6
+  return {
+    input: (totals.input * p.input) / 1e6,
+    output: (totals.output * p.output) / 1e6,
+    cacheRead: (totals.cacheRead * p.cacheRead) / 1e6,
+    cacheWrite: (totals.cacheWrite * p.cacheWrite) / 1e6,
+  }
 }
 
 const fileCache = new Map()
@@ -115,11 +119,15 @@ function parseFile(full, st) {
     if (obj.message.model === '<synthetic>') continue // mensagens internas do Claude Code
     const ts = Date.parse(obj.timestamp || obj.message?.timestamp || 0)
     if (!ts) continue
+    const u = obj.message.usage
     entries.push({
       ts,
       model: obj.message.model,
-      tokens: tokensOf({ usage: obj.message.usage }),
-      costUsd: costOf(obj.message.usage, familyOf(obj.message.model)),
+      tokens: tokensOf({ usage: u }),
+      input: u.input_tokens || 0,
+      output: u.output_tokens || 0,
+      cacheRead: u.cache_read_input_tokens || 0,
+      cacheWrite: u.cache_creation_input_tokens || 0,
       key: `${obj.message.id || ''}:${obj.requestId || obj.uuid || ''}`,
     })
   }
@@ -261,12 +269,19 @@ function getUsage(config) {
       if (e.ts >= weekStart) {
         weekTokens += t
         const lbl = labelFor(e.model)
-        const cur = byModel.get(lbl) || { tokens: 0, costUsd: 0, priced: false }
-        cur.tokens += t
-        if (e.costUsd != null) {
-          cur.costUsd += e.costUsd
-          cur.priced = true
+        const cur = byModel.get(lbl) || {
+          tokens: 0,
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+          family: familyOf(e.model),
         }
+        cur.tokens += t
+        cur.input += e.input
+        cur.output += e.output
+        cur.cacheRead += e.cacheRead
+        cur.cacheWrite += e.cacheWrite
         byModel.set(lbl, cur)
       }
       if (e.ts >= todayMs) todayTokens += t
@@ -309,7 +324,19 @@ function getUsage(config) {
   const activity = active && newestFile ? detectActivity(newestFile) : null
 
   const byModelArr = [...byModel.entries()]
-    .map(([label, v]) => ({ label, tokens: v.tokens, costUsd: v.priced ? v.costUsd : null }))
+    .map(([label, v]) => {
+      const cost = costBreakdown(v, v.family)
+      return {
+        label,
+        tokens: v.tokens,
+        input: v.input,
+        output: v.output,
+        cacheRead: v.cacheRead,
+        cacheWrite: v.cacheWrite,
+        cost, // { input, output, cacheRead, cacheWrite } em USD, ou null sem preço
+        costUsd: cost ? cost.input + cost.output + cost.cacheRead + cost.cacheWrite : null,
+      }
+    })
     .sort((a, b) => b.tokens - a.tokens)
 
   return {
