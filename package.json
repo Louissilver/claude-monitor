@@ -1,6 +1,6 @@
 {
   "name": "claude-monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Widget desktop para monitorar o uso do Claude (Windows e Linux/Ubuntu) — build local, foco em não vazar credenciais.",
   "private": true,
   "main": "main.js",
