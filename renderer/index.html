@@ -281,14 +281,14 @@
 
         <!-- by model (7 days) -->
         <div id="bymodel">
-          <div class="bymodel-title">por modelo · 7 dias</div>
+          <div class="bymodel-title" title="Valores em $ são uma simulação de custo via API — seu plano tem preço fixo, isso não é cobrança real.">por modelo · 7 dias</div>
           <div id="bymodel-list"></div>
         </div>
 
         <div class="divider"></div>
 
-        <!-- 30-day map -->
-        <div id="heat">
+        <!-- 30-day map — clicável, abre o gráfico de linha -->
+        <div id="heat" title="Clique para ver em gráfico">
           <div id="heat-row"></div>
           <div id="heat-meta">
             <span>30 dias</span>
@@ -296,6 +296,18 @@
           </div>
         </div>
       </div>
+
+      <!-- gráfico de uso diário (30 dias), aberto ao clicar no mapa de calor -->
+      <div id="chart">
+        <div class="chart-title">Uso diário · 30 dias</div>
+        <svg id="chart-svg" viewBox="0 0 240 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="chart-actions">
+          <button id="chart-close">Fechar</button>
+        </div>
+      </div>
+
+      <!-- tooltip compartilhado (mapa de calor + gráfico), instantâneo -->
+      <div id="tooltip" hidden></div>
 
       <!-- settings panel -->
       <div id="settings">

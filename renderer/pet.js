@@ -154,6 +154,12 @@ function fmtReset(ms) {
   const m = Math.floor((ms % 3600000) / 60000)
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
+// simulação de custo via API — não é cobrança real (ver usage.js)
+function fmtUsd(v) {
+  if (v == null) return null
+  if (v > 0 && v < 0.01) return '<$0.01'
+  return `$${v.toFixed(2)}`
+}
 function setState(name) {
   const b = document.body
   ;[...b.classList].forEach((c) => {
@@ -330,10 +336,38 @@ function clearChildren(node) {
   while (node.firstChild) node.removeChild(node.firstChild)
 }
 
+// Tooltip instantâneo compartilhado (mapa de calor + gráfico) — posiciona
+// relativo a #card, que já é o ancestral posicionado (position: absolute)
+// mais próximo de qualquer elemento da UI, então funciona tanto para os
+// quadradinhos do heat map quanto para os pontos <circle> do SVG do gráfico.
+function showTip(targetEl, text) {
+  const tip = el('tooltip')
+  const card = el('card')
+  tip.textContent = text
+  tip.hidden = false
+  const cardRect = card.getBoundingClientRect()
+  const targetRect = targetEl.getBoundingClientRect()
+  let left = targetRect.left - cardRect.left + targetRect.width / 2
+  tip.style.left = `${left}px`
+  tip.style.top = `${targetRect.top - cardRect.top}px`
+  // clampa depois de medir a largura real do tooltip, pra não vazar pra
+  // fora da janela (que não tem scroll — conteúdo fora da borda só some)
+  requestAnimationFrame(() => {
+    if (tip.hidden) return
+    const half = tip.getBoundingClientRect().width / 2
+    left = Math.min(cardRect.width - half - 4, Math.max(half + 4, left))
+    tip.style.left = `${left}px`
+  })
+}
+function hideTip() {
+  el('tooltip').hidden = true
+}
+
 // 30-day map
 function renderHeat(days) {
   const row = el('heat-row')
   clearChildren(row)
+  hideTip() // quadrados velhos (com os listeners) somem nesse clearChildren
   const max = Math.max(1, ...days)
   days.forEach((v, i) => {
     const sq = document.createElement('div')
@@ -344,7 +378,9 @@ function renderHeat(days) {
     }
     sq.className = `sq${lv ? ` lv${lv}` : ''}`
     const daysAgo = days.length - 1 - i
-    sq.title = `${daysAgo === 0 ? 'hoje' : `${daysAgo}d atrás`} · ${fmtTokens(v)} tokens`
+    const label = `${daysAgo === 0 ? 'hoje' : `${daysAgo}d atrás`} · ${fmtTokens(v)} tokens`
+    sq.addEventListener('mouseenter', () => showTip(sq, label))
+    sq.addEventListener('mouseleave', hideTip)
     row.appendChild(sq)
   })
 }
@@ -375,7 +411,8 @@ function renderModels(list) {
 
     const val = document.createElement('span')
     val.className = 'mval'
-    val.textContent = fmtTokens(m.tokens)
+    const usd = fmtUsd(m.costUsd)
+    val.textContent = usd ? `${fmtTokens(m.tokens)} · ${usd}` : fmtTokens(m.tokens)
 
     row.append(name, barWrap, val)
     box.appendChild(row)
@@ -387,6 +424,48 @@ function renderModels(list) {
     empty.textContent = 'sem atividade'
     box.appendChild(empty)
   }
+}
+
+// gráfico de linha do uso diário (30 dias) — SVG desenhado na mão, sem
+// biblioteca (o projeto não tem dependência de runtime nenhuma, ver README)
+function renderChart(days) {
+  const svg = el('chart-svg')
+  if (!svg) return
+  clearChildren(svg)
+  hideTip()
+  if (!days.length) return
+  const W = 240
+  const H = 100
+  const PAD = 4
+  const max = Math.max(1, ...days)
+  const stepX = days.length > 1 ? (W - PAD * 2) / (days.length - 1) : 0
+  const points = days.map((v, i) => [PAD + i * stepX, H - PAD - (v / max) * (H - PAD * 2)])
+
+  const area = document.createElementNS(SVGNS, 'path')
+  const areaD =
+    `M${PAD},${H - PAD} ` +
+    points.map(([x, y]) => `L${x.toFixed(1)},${y.toFixed(1)}`).join(' ') +
+    ` L${W - PAD},${H - PAD} Z`
+  area.setAttribute('d', areaD)
+  area.setAttribute('class', 'chart-area')
+  svg.appendChild(area)
+
+  const line = document.createElementNS(SVGNS, 'path')
+  line.setAttribute('d', `M${points.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L')}`)
+  line.setAttribute('class', 'chart-line')
+  svg.appendChild(line)
+
+  points.forEach(([x, y], i) => {
+    const dot = document.createElementNS(SVGNS, 'circle')
+    dot.setAttribute('cx', x.toFixed(1))
+    dot.setAttribute('cy', y.toFixed(1))
+    dot.setAttribute('class', 'chart-dot')
+    const daysAgo = days.length - 1 - i
+    const label = `${daysAgo === 0 ? 'hoje' : `${daysAgo}d atrás`} · ${fmtTokens(days[i])} tokens`
+    dot.addEventListener('mouseenter', () => showTip(dot, label))
+    dot.addEventListener('mouseleave', hideTip)
+    svg.appendChild(dot)
+  })
 }
 
 // one-shot reaction (adds a class, removes after ms)
@@ -540,6 +619,7 @@ function render(d) {
 
   renderModels(d.byModel || [])
   renderHeat(d.days30 || [])
+  renderChart(d.days30 || [])
   el('month-total').textContent = `${fmtTokens(d.monthTokens)} tokens`
 
   currentRate = d.tokensPerMin || 0
@@ -709,7 +789,7 @@ function populateSettings(source) {
   el('set-fire').value = c.fireThreshold != null ? c.fireThreshold : 90
 }
 function openSettings() {
-  document.body.classList.remove('collapsed')
+  document.body.classList.remove('collapsed', 'chart-open')
   populateSettings(currentConfig)
   clearSaveDirty() // fields now match the saved config
   document.body.classList.add('settings-open')
@@ -718,6 +798,21 @@ function openSettings() {
 el('gear').addEventListener('click', openSettings)
 // menu "Configurações" da bandeja pede pra abrir direto nas configurações
 window.api.onOpenSettings(openSettings)
+
+// gráfico de uso diário — abre clicando no mapa de calor
+function openChart() {
+  document.body.classList.remove('collapsed', 'settings-open')
+  document.body.classList.add('chart-open')
+  renderChart(lastData?.days30 || [])
+  fitSize()
+}
+function closeChart() {
+  document.body.classList.remove('chart-open')
+  hideTip()
+  fitSize()
+}
+el('heat').addEventListener('click', openChart)
+el('chart-close').addEventListener('click', closeChart)
 // só preenche os campos com o padrão — não salva sozinho, o Salvar acende
 // (fica "sujo") igual a qualquer outra edição, precisa confirmar
 el('set-reset-defaults').addEventListener('click', () => {

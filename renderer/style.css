@@ -184,11 +184,97 @@ body.collapsed #account-chip {
   -webkit-app-region: no-drag;
 }
 body.settings-open #content,
-body.settings-open #mini {
+body.settings-open #mini,
+body.chart-open #content,
+body.chart-open #mini {
   display: none;
 }
 body.settings-open #settings {
   display: block;
+}
+
+/* gráfico de uso diário — mesmo padrão do painel de configurações */
+#chart {
+  display: none;
+  margin-top: 8px;
+  -webkit-app-region: no-drag;
+}
+body.chart-open #chart {
+  display: block;
+}
+.chart-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 8px;
+}
+#chart-svg {
+  width: 100%;
+  height: 110px;
+  display: block;
+  overflow: visible;
+}
+.chart-area {
+  fill: var(--coral);
+  opacity: 0.15;
+  stroke: none;
+}
+.chart-line {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.chart-dot {
+  r: 2.2;
+  fill: rgba(230, 160, 127, 0.35);
+  cursor: pointer;
+  transition: fill 0.15s;
+}
+.chart-dot:hover {
+  fill: var(--coral-soft);
+}
+.chart-actions {
+  display: flex;
+  margin-top: 10px;
+}
+#chart-close {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  transition: background 0.18s;
+}
+#chart-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* tooltip instantâneo compartilhado (mapa de calor + gráfico) — substitui
+   o title="" nativo do navegador, que demora ~1s pra aparecer */
+#tooltip {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  background: rgba(20, 15, 12, 0.95);
+  border: 0.5px solid rgba(255, 210, 180, 0.15);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 9.5px;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, calc(-100% - 6px));
+}
+#tooltip[hidden] {
+  display: none;
 }
 .set-title {
   font-size: 12px;
@@ -604,8 +690,9 @@ body.collapsed #stage {
 body.collapsed #pet {
   -webkit-app-region: drag;
 }
-/* hide minimize while settings are open (toggling it bugs the layout) */
-body.settings-open #min {
+/* hide minimize while settings/chart are open (toggling it bugs the layout) */
+body.settings-open #min,
+body.chart-open #min {
   display: none;
 }
 
@@ -1454,9 +1541,19 @@ body.state-tired #status-text {
   letter-spacing: 0.2px;
 }
 
-/* 30-day map */
+/* 30-day map — clicável, abre o gráfico de linha */
 #heat {
   margin-top: 12px;
+  padding: 4px;
+  margin-left: -4px;
+  margin-right: -4px;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background 0.15s;
+}
+#heat:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 #heat-row {
   display: flex;

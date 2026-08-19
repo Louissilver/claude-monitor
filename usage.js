@@ -7,10 +7,10 @@ const os = require('node:os')
 const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude')
 const PROJECTS_DIR = path.join(CLAUDE_DIR, 'projects')
 
-function labelFor(model) {
-  if (!model) return 'desconhecido'
+function familyOf(model) {
+  if (!model) return null
   const m = model.toLowerCase()
-  const fam = m.includes('opus')
+  return m.includes('opus')
     ? 'Opus'
     : m.includes('sonnet')
       ? 'Sonnet'
@@ -21,7 +21,12 @@ function labelFor(model) {
           : m.includes('mythos')
             ? 'Mythos'
             : null
-  const ver = m.match(/-(\d)-(\d+)/)
+}
+
+function labelFor(model) {
+  if (!model) return 'desconhecido'
+  const fam = familyOf(model)
+  const ver = model.toLowerCase().match(/-(\d)-(\d+)/)
   if (fam && ver) return `${fam} ${ver[1]}.${ver[2]}`
   if (fam) return fam
   return model
@@ -35,6 +40,29 @@ function tokensOf(entry) {
     (u.cache_read_input_tokens || 0) +
     (u.cache_creation_input_tokens || 0)
   )
+}
+
+// USD por milhão de tokens, preço de API "pay as you go" (não é o que você
+// paga — planos Pro/Max são preço fixo). ESTIMATIVA pública de referência,
+// só para dar noção de escala; a Anthropic pode mudar preços a qualquer
+// momento e não temos como acompanhar isso automaticamente. Só cobre as
+// famílias com preço público conhecido — Fable/Mythos ficam sem $ (melhor
+// omitir do que simular um número inventado).
+const PRICING_USD_PER_MTOK = {
+  Opus: { input: 15, output: 75, cacheWrite: 18.75, cacheRead: 1.5 },
+  Sonnet: { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
+  Haiku: { input: 0.8, output: 4, cacheWrite: 1, cacheRead: 0.08 },
+}
+
+function costOf(usage, family) {
+  const p = PRICING_USD_PER_MTOK[family]
+  if (!p) return null
+  const u = usage || {}
+  const input = u.input_tokens || 0
+  const output = u.output_tokens || 0
+  const cacheRead = u.cache_read_input_tokens || 0
+  const cacheWrite = u.cache_creation_input_tokens || 0
+  return (input * p.input + output * p.output + cacheRead * p.cacheRead + cacheWrite * p.cacheWrite) / 1e6
 }
 
 const fileCache = new Map()
@@ -91,6 +119,7 @@ function parseFile(full, st) {
       ts,
       model: obj.message.model,
       tokens: tokensOf({ usage: obj.message.usage }),
+      costUsd: costOf(obj.message.usage, familyOf(obj.message.model)),
       key: `${obj.message.id || ''}:${obj.requestId || obj.uuid || ''}`,
     })
   }
@@ -232,7 +261,13 @@ function getUsage(config) {
       if (e.ts >= weekStart) {
         weekTokens += t
         const lbl = labelFor(e.model)
-        byModel.set(lbl, (byModel.get(lbl) || 0) + t)
+        const cur = byModel.get(lbl) || { tokens: 0, costUsd: 0, priced: false }
+        cur.tokens += t
+        if (e.costUsd != null) {
+          cur.costUsd += e.costUsd
+          cur.priced = true
+        }
+        byModel.set(lbl, cur)
       }
       if (e.ts >= todayMs) todayTokens += t
       if (e.ts >= recentCutoff) recent.push({ ts: e.ts, tokens: t })
@@ -274,7 +309,7 @@ function getUsage(config) {
   const activity = active && newestFile ? detectActivity(newestFile) : null
 
   const byModelArr = [...byModel.entries()]
-    .map(([label, tokens]) => ({ label, tokens }))
+    .map(([label, v]) => ({ label, tokens: v.tokens, costUsd: v.priced ? v.costUsd : null }))
     .sort((a, b) => b.tokens - a.tokens)
 
   return {
