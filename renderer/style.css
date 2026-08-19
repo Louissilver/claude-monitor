@@ -1591,6 +1591,14 @@ body.state-tired #status-text {
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+#heat-chart-link {
+  display: block;
+  margin: 6px auto 0;
+  color: var(--coral-soft);
+}
+#heat-chart-link:hover {
+  color: var(--coral);
+}
 
 /* divider */
 .divider {
