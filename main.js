@@ -163,6 +163,7 @@ const DEFAULT_CONFIG = {
   alerts: true,
   alertThresholds: [80, 95],
   fireThreshold: 90,
+  petName: '',
   pollIntervalMs: 4000,
   activeThresholdMs: 20000,
   sleepThresholdMs: 300000,
@@ -196,6 +197,7 @@ const CONFIG_SCHEMA = {
     v.length <= 4 &&
     v.every((n) => Number.isFinite(n) && n >= 1 && n <= 100),
   fireThreshold: (v) => Number.isFinite(v) && v >= 1 && v <= 99,
+  petName: (v) => typeof v === 'string' && v.length <= 24,
   weeklyAnchorIso: (v) => v === null || (typeof v === 'string' && !Number.isNaN(Date.parse(v))),
 }
 function sanitizeConfigPatch(patch) {

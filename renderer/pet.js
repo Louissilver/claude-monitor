@@ -634,8 +634,10 @@ function render(d) {
           : st === 'tired'
             ? 'no limite'
             : 'ocioso'
-  el('status-text').textContent = word
-  el('mini-text').textContent = word
+  const petName = (currentConfig.petName || '').trim()
+  const statusLine = petName ? `${petName} está ${word}` : word
+  el('status-text').textContent = statusLine
+  el('mini-text').textContent = statusLine
   el('rate').textContent =
     d.active && d.tokensPerMin > 0
       ? `${fmtTokens(d.tokensPerMin)} tok/min`
@@ -813,6 +815,7 @@ function snapshotSettings() {
     t1: el('set-t1').value,
     t2: el('set-t2').value,
     fire: el('set-fire').value,
+    petname: el('set-petname').value,
   })
 }
 function refreshSaveDirty() {
@@ -833,6 +836,7 @@ function populateSettings(source) {
   el('set-t1').value = th[0] != null ? th[0] : 80
   el('set-t2').value = th[1] != null ? th[1] : 95
   el('set-fire').value = c.fireThreshold != null ? c.fireThreshold : 90
+  el('set-petname').value = c.petName || ''
 }
 function openSettings() {
   document.body.classList.remove('collapsed', 'chart-open', 'model-detail-open')
@@ -880,7 +884,7 @@ for (const b of document.querySelectorAll('.num-btn')) {
   })
 }
 // light up Save whenever an editable field changes
-for (const id of ['set-autostart', 'set-alerts', 'set-t1', 'set-t2', 'set-fire']) {
+for (const id of ['set-autostart', 'set-alerts', 'set-t1', 'set-t2', 'set-fire', 'set-petname']) {
   el(id).addEventListener('input', refreshSaveDirty)
   el(id).addEventListener('change', refreshSaveDirty)
 }
@@ -899,6 +903,7 @@ el('set-save').addEventListener('click', () => {
       .filter((n) => n >= 1 && n <= 100)
       .sort((a, b) => a - b),
     fireThreshold: fire >= 1 && fire <= 99 ? fire : 90,
+    petName: el('set-petname').value.trim().slice(0, 24),
   })
   clearSaveDirty()
   document.body.classList.remove('settings-open')
