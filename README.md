@@ -96,13 +96,17 @@ que na sua máquina: `git clone` + `npm ci` + `npm start`. Passo a passo em
 
 - 🐾 Bichinho animado que reflete o estado do Claude Code em tempo real (ocioso, trabalhando, lendo, editando, rodando, pesquisando, dormindo, pegando fogo perto do limite...).
 - 📊 Barras de uso da sessão atual (5h) e da semana, com % oficial da Anthropic quando conectado.
-- 🗓️ Mapa de calor dos últimos 30 dias e detalhamento de consumo por modelo (Opus, Sonnet, Haiku...).
+- 🗓️ Mapa de calor dos últimos 30 dias, com gráfico de linha e tooltip instantâneo ao passar o mouse.
+- 💰 Consumo por modelo (Opus, Sonnet, Haiku...) com simulação de custo em $ e detalhe por tipo de token (entrada/saída/cache).
 - 🔔 Alertas configuráveis por notificação nativa do Windows ao cruzar limites de uso.
 - 🔒 Funciona 100% offline por padrão, lendo só os logs locais do Claude Code — conectar a conta é opcional.
 - 🪟 Widget flutuante, sem moldura, sempre visível, com modo minimizado.
 - 🖥️ Ícone na bandeja do sistema — fechar esconde, não mata o processo; só uma instância roda por vez.
 - 🚀 Inicialização automática ao ligar/entrar na sessão (configurável), em Windows e Linux.
 - 🐧 Suporte a Linux/Ubuntu com pacote `.deb` e AppImage (ver [ADR-002](docs/ADR-002-suporte-linux.md)).
+
+Detalhe de cada cálculo/limiar/precedência de estado em
+[`docs/features-e-regras-de-negocio.md`](docs/features-e-regras-de-negocio.md).
 
 ## Por que este projeto existe
 
@@ -326,9 +330,10 @@ claude-monitor/
 │   ├── style.css    # Estilo e animações
 │   └── pet.js        # Lógica do bichinho e da UI
 └── docs/
-    ├── ADR-001-*.md                # Decisão de arquitetura de segurança
-    ├── ADR-002-suporte-linux.md    # Decisão do port Linux/Ubuntu
-    └── setup-virtualbox-ubuntu.md  # Tutorial: VM de teste no VirtualBox
+    ├── ADR-001-*.md                        # Decisão de arquitetura de segurança
+    ├── ADR-002-suporte-linux.md            # Decisão do port Linux/Ubuntu
+    ├── features-e-regras-de-negocio.md     # O que o app faz e por que se comporta assim
+    └── setup-virtualbox-ubuntu.md          # Tutorial: VM de teste no VirtualBox
 ```
 
 ## Atualizando
