@@ -69,6 +69,11 @@ sudo apt install ./Claude*.deb
 Detalhes de cada caminho (o que cada script faz, por que existem dois) em
 [Instalação rápida (Ubuntu)](#instalação-rápida-ubuntu).
 
+**Prefere não baixar nenhum binário, nem no Windows?** Rode direto do
+código-fonte via `npm` — mesmo processo que builda os artefatos acima, só
+que na sua máquina: `git clone` + `npm ci` + `npm start`. Passo a passo em
+[Instalação](#instalação).
+
 ## Índice
 
 - [Funcionalidades](#funcionalidades)
