@@ -112,26 +112,20 @@ function paintSpriteRows(group, rows, startRow, color) {
   })
 }
 function buildHeadband(group, color) {
-  // Máscara cobre a cabeça inteira acima da linha dos olhos (linhas 0-2
-  // do SPRITE — inclui a linha mais larga, onde ficariam as orelhas).
-  // #eyes é desenhado DEPOIS de #skin-overlay no SVG (ver index.html),
-  // então os olhos aparecem por cima da máscara automaticamente — sobra
-  // só a linha 3 (altura dos olhos) com a cor base do bichinho, criando
-  // o efeito de fresta sem precisar recortar buraco nenhum aqui.
-  paintSpriteRows(group, SPRITE.slice(0, 3), 0, color)
-  // nó da bandana, centralizado na testa, um pouco acima da cabeça
-  const knot = document.createElementNS(SVGNS, 'rect')
-  knot.setAttribute('x', 42)
-  knot.setAttribute('y', -4)
-  knot.setAttribute('width', 16)
-  knot.setAttribute('height', 7)
-  knot.setAttribute('rx', 2)
-  knot.setAttribute('fill', color)
-  group.appendChild(knot)
+  // Máscara cobre a cabeça inteira, incluindo a linha dos olhos (linhas
+  // 0-3 do SPRITE). #eyes é desenhado DEPOIS de #skin-overlay no SVG
+  // (ver index.html), então os olhos aparecem por cima da máscara de
+  // qualquer forma — cobrir a linha 3 inteira também (não só acima dela)
+  // tira a "moldura" de cor base ao redor dos olhos, sobra só o pixel
+  // do olho em si: a fresta mais fina que dá pra fazer sem recortar
+  // buraco de verdade no SVG. Não desce até a linha 4 de propósito —
+  // ali começa a camisa (rows4-6), evita as duas sobreposições brigando
+  // por cor na mesma célula.
+  paintSpriteRows(group, SPRITE.slice(0, 4), 0, color)
   // tira caindo atrás, saindo de baixo da máscara
   const tail = document.createElementNS(SVGNS, 'rect')
   tail.setAttribute('x', 78)
-  tail.setAttribute('y', 20)
+  tail.setAttribute('y', 30)
   tail.setAttribute('width', 5)
   tail.setAttribute('height', 20)
   tail.setAttribute('fill', color)
