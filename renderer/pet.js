@@ -69,9 +69,9 @@ const SKINS = {
   },
   ninja: {
     label: 'Ninja',
-    shirtColor: '#22252b', // preto-azulado — não o laranja de personagem nenhum
-    shortsColor: '#22252b',
-    headbandColor: '#141414', // preta, sem símbolo de vila nenhuma
+    shirtColor: '#141414', // mesma cor da máscara — não o laranja de personagem nenhum
+    shortsColor: '#141414',
+    headbandColor: '#141414',
   },
   pirata: {
     // Paleta igual à do personagem que inspirou o pedido, por decisão
