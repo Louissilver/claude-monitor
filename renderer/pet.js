@@ -144,6 +144,76 @@ const SKINS = {
       })
     },
   },
+  // Visual fiel ao personagem que inspirou o pedido — jaqueta
+  // laranja+preto e bandana da Vila da Folha com o símbolo — por
+  // decisão explícita do usuário, mesmo protocolo das outras skins
+  // fiéis (Pirata, Bruxo). Rótulo genérico (não o nome do personagem),
+  // mesma razão de sempre. Fica como skin separada da "Ninja"
+  // genérica, que continua existindo do jeito que era.
+  naruto: {
+    label: 'Ninja (laranja)',
+    shirtColor: '#e8641c', // jaqueta laranja — cobertura padrão, fechada (sem corte aberto)
+    shortsColor: '#1c2733', // calça azul-escura
+    extra(group) {
+      // gola preta
+      const collar = document.createElementNS(SVGNS, 'rect')
+      collar.setAttribute('x', 20)
+      collar.setAttribute('y', 40)
+      collar.setAttribute('width', 60)
+      collar.setAttribute('height', 6)
+      collar.setAttribute('fill', '#171512')
+      group.appendChild(collar)
+      // zíper central
+      const zip = document.createElementNS(SVGNS, 'rect')
+      zip.setAttribute('x', 48)
+      zip.setAttribute('y', 40)
+      zip.setAttribute('width', 4)
+      zip.setAttribute('height', 30)
+      zip.setAttribute('fill', '#171512')
+      group.appendChild(zip)
+      // faixa de pano azul da bandana, terminando bem na linha dos olhos
+      const cloth = document.createElementNS(SVGNS, 'rect')
+      cloth.setAttribute('x', 8)
+      cloth.setAttribute('y', 24)
+      cloth.setAttribute('width', 84)
+      cloth.setAttribute('height', 6)
+      cloth.setAttribute('fill', '#2e5fa3')
+      group.appendChild(cloth)
+      // tiras caindo atrás, uma de cada lado
+      ;[6, 89].forEach((x) => {
+        const tail = document.createElementNS(SVGNS, 'rect')
+        tail.setAttribute('x', x)
+        tail.setAttribute('y', 24)
+        tail.setAttribute('width', 5)
+        tail.setAttribute('height', 18)
+        tail.setAttribute('fill', '#2e5fa3')
+        group.appendChild(tail)
+      })
+      // placa metálica
+      const plate = document.createElementNS(SVGNS, 'rect')
+      plate.setAttribute('x', 20)
+      plate.setAttribute('y', 16)
+      plate.setAttribute('width', 60)
+      plate.setAttribute('height', 9)
+      plate.setAttribute('rx', 1)
+      plate.setAttribute('fill', '#b8bcc2')
+      group.appendChild(plate)
+      // símbolo gravado na placa — marca abstrata em blocos, estilo
+      // pixel art (sem tentar reproduzir o símbolo real em detalhe)
+      ;[
+        [47, 18, 6, 2],
+        [49, 17, 2, 5],
+      ].forEach(([x, y, w, h]) => {
+        const seg = document.createElementNS(SVGNS, 'rect')
+        seg.setAttribute('x', x)
+        seg.setAttribute('y', y)
+        seg.setAttribute('width', w)
+        seg.setAttribute('height', h)
+        seg.setAttribute('fill', '#171512')
+        group.appendChild(seg)
+      })
+    },
+  },
 }
 
 function paintSpriteRows(group, rows, startRow, color) {

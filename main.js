@@ -187,7 +187,7 @@ function loadConfig() {
 // Lista própria do processo principal — nunca confia na lista de skins que
 // o renderer possa mandar de volta (mesmo espírito do CONFIG_SCHEMA: quem
 // decide o que é válido é o main, não quem manda o patch).
-const SKIN_KEYS = ['default', 'brasil', 'ninja', 'pirata', 'bruxo']
+const SKIN_KEYS = ['default', 'brasil', 'ninja', 'pirata', 'bruxo', 'naruto']
 
 // --- validação da config salva pelo renderer (fecha R6) ---------------------
 // Allowlist explícita: cada chave só é aceita se passar no validador. Tudo
