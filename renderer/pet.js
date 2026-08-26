@@ -40,17 +40,21 @@ const SPRITE = [
   })
 })()
 
-// Skins: roupa desenhada por cima do corpo, reaproveitando as MESMAS linhas
-// do SPRITE pra "camisa" (linhas 4-6) e "bermuda" (linha 7) — garante que a
-// roupa nunca escapa da silhueta do bichinho, é o mesmo desenho, só com
-// outra cor. Cocar/chapéu usa a mesma técnica do buildHat() acima (bitmap
-// próprio, posicionado com y negativo acima da cabeça).
+// Skins: roupa desenhada por cima do corpo nas linhas 4-6 do SPRITE
+// ("camisa") e linha 7 ("bermuda") — por padrão reaproveita essas linhas
+// tal qual (shirtMask opcional por skin substitui, sempre como
+// SUBCONJUNTO das células do SPRITE ali, nunca acrescenta célula fora
+// dele), então a roupa nunca escapa da silhueta do bichinho. Cocar/chapéu
+// usa a mesma técnica do buildHat() acima (bitmap próprio, posicionado
+// com y negativo acima da cabeça).
 //
 // "ninja" e "pirata" são inspirados livremente em arquétipos genéricos
-// (não em personagens específicos) — de propósito, paleta de cor diferente
-// da dos personagens que inspiraram o pedido original, ver docs/ADR-001 e a
-// conversa que definiu isso: nome do personagem não aparece em lugar
-// nenhum do código nem da UI.
+// (não em personagens específicos) — nome do personagem não aparece em
+// lugar nenhum do código nem da UI, e cada skin mistura pelo menos um
+// elemento fora da paleta do personagem que inspirou o pedido original
+// (pirata: faixa do chapéu e bermuda marrom, nunca a combinação de três
+// cores que tornaria identificável). Ver docs/ADR-001 e o histórico da
+// conversa que definiu esse critério antes de desenhar qualquer coisa.
 const SKINS = {
   default: null, // sem sobreposição — cor base do bichinho (var(--pixel))
   brasil: {
@@ -66,8 +70,13 @@ const SKINS = {
   },
   pirata: {
     label: 'Pirata',
-    shirtColor: '#e8e2d0', // camisa clara — não vermelha
-    shortsColor: '#6b4a2f', // marrom — não azul
+    shirtColor: '#c0392b', // vermelho
+    // "aberta": vão no meio do peito (mostra a cor base do corpo por
+    // baixo) em vez do preenchimento cheio do SPRITE — efeito colete,
+    // não camisa fechada. Continua um subconjunto das células do
+    // SPRITE nessas linhas, então nunca escapa da silhueta do corpo.
+    shirtMask: ['####..####', '.###..###.', '.###..###.'],
+    shortsColor: '#6b4a2f', // marrom — não azul, mantém distância do personagem
     hatColor: '#d9b25c',
     hatBandColor: '#4a3320', // faixa marrom, não vermelha
   },
@@ -136,7 +145,7 @@ function applySkin(key) {
   clearChildren(group)
   const skin = SKINS[key]
   if (!skin) return // 'default' (ou chave desconhecida): sem roupa
-  paintSpriteRows(group, SPRITE.slice(4, 7), 4, skin.shirtColor)
+  paintSpriteRows(group, skin.shirtMask || SPRITE.slice(4, 7), 4, skin.shirtColor)
   paintSpriteRows(group, [SPRITE[7]], 7, skin.shortsColor)
   if (skin.headbandColor) buildHeadband(group, skin.headbandColor)
   if (skin.hatColor) buildStrawHat(group, skin.hatColor, skin.hatBandColor)
