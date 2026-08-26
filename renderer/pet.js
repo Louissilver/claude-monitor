@@ -71,7 +71,7 @@ const SKINS = {
     label: 'Ninja',
     shirtColor: '#22252b', // preto-azulado — não o laranja de personagem nenhum
     shortsColor: '#22252b',
-    headbandColor: '#8a8f98', // faixa lisa, sem símbolo de vila nenhuma
+    headbandColor: '#141414', // preta, sem símbolo de vila nenhuma
   },
   pirata: {
     // Paleta igual à do personagem que inspirou o pedido, por decisão
@@ -111,17 +111,23 @@ function paintSpriteRows(group, rows, startRow, color) {
     }
   })
 }
+// Linha 3 do SPRITE é `###o##o###` (índices 0-9, 'o' = olho em 3 e 6).
+// Máscara da bandana só cobre as duas pontas (0,1 e 8,9) nessa linha —
+// libera dois pixels de cada lado de cada olho (2,4 em volta do olho em
+// 3; 5,7 em volta do olho em 6) e o que sobra entre eles (4,5), com a
+// cor base do bichinho aparecendo aí. Ainda um subconjunto da linha
+// original do SPRITE (nunca pinta onde o SPRITE tem '.').
+const NINJA_MASK_ROW3 = '##......##'
+
 function buildHeadband(group, color) {
-  // Máscara cobre a cabeça inteira, incluindo a linha dos olhos (linhas
-  // 0-3 do SPRITE). #eyes é desenhado DEPOIS de #skin-overlay no SVG
-  // (ver index.html), então os olhos aparecem por cima da máscara de
-  // qualquer forma — cobrir a linha 3 inteira também (não só acima dela)
-  // tira a "moldura" de cor base ao redor dos olhos, sobra só o pixel
-  // do olho em si: a fresta mais fina que dá pra fazer sem recortar
-  // buraco de verdade no SVG. Não desce até a linha 4 de propósito —
-  // ali começa a camisa (rows4-6), evita as duas sobreposições brigando
-  // por cor na mesma célula.
-  paintSpriteRows(group, SPRITE.slice(0, 4), 0, color)
+  // Máscara cobre a cabeça inteira (linhas 0-2 do SPRITE cheias) mais a
+  // linha 3 recortada acima. #eyes é desenhado DEPOIS de #skin-overlay
+  // no SVG (ver index.html), então os próprios pixels dos olhos aparecem
+  // por cima da máscara de qualquer forma, independente do que tem por
+  // baixo. Não desce até a linha 4 de propósito — ali começa a camisa
+  // (rows4-6), evita as duas sobreposições brigando por cor na mesma
+  // célula.
+  paintSpriteRows(group, [...SPRITE.slice(0, 3), NINJA_MASK_ROW3], 0, color)
   // tira caindo atrás, saindo de baixo da máscara
   const tail = document.createElementNS(SVGNS, 'rect')
   tail.setAttribute('x', 78)
