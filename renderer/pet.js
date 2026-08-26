@@ -104,24 +104,25 @@ const SKINS = {
     shirtColor: '#161616', // capa preta
     // aberta: vão central (mesma técnica das outras skins) revela a
     // camisa branca + gravata desenhadas em extra(), não a cor base do
-    // corpo — cobre as 3 linhas do torso (não só uma), pra caber a
-    // gravata com altura de verdade.
-    shirtMask: ['####..####', '.###..###.', '.###..###.'],
+    // corpo. Começa na linha 5 (não 4) — um pixel mais abaixo, afasta
+    // da boca — cobre só 2 linhas do torso, base alinhada com a calça.
+    shirtMask: ['.###..###.', '.###..###.'],
+    shirtStartRow: 5,
     shortsColor: '#161616', // calça preta
     showGlasses: true, // reaproveita o #glasses existente (fica na frente dos olhos)
     extra(group) {
       const shirt = document.createElementNS(SVGNS, 'rect')
       shirt.setAttribute('x', 40)
-      shirt.setAttribute('y', 40)
+      shirt.setAttribute('y', 50)
       shirt.setAttribute('width', 20)
-      shirt.setAttribute('height', 30)
+      shirt.setAttribute('height', 20)
       shirt.setAttribute('fill', '#f2efe6')
       group.appendChild(shirt)
       const tie = document.createElementNS(SVGNS, 'rect')
       tie.setAttribute('x', 46)
-      tie.setAttribute('y', 42)
+      tie.setAttribute('y', 52)
       tie.setAttribute('width', 8)
-      tie.setAttribute('height', 26)
+      tie.setAttribute('height', 16)
       tie.setAttribute('fill', '#a5231f')
       group.appendChild(tie)
       // marca em raio na testa — três blocos formando um zigue-zague,
