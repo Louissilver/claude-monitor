@@ -25,6 +25,7 @@ para quem for mexer no código ou decidir a próxima feature.
   - [Janela, bandeja e painéis](#janela-bandeja-e-painéis)
   - [Conta conectada (OAuth)](#conta-conectada-oauth)
   - [Multi-conta](#multi-conta)
+  - [Skins](#skins)
 
 ## Visão geral
 
@@ -58,6 +59,8 @@ bichinho de estimação animado. Funciona em dois modos, não excludentes:
 | Single instance | `main.js` `requestSingleInstanceLock` | Segunda tentativa de abrir só foca a janela existente |
 | Multiplataforma | `platform.js` | Autostart e checagem de armazenamento seguro adaptados por SO |
 | Multi-conta | `main.js`/`auth.js` via `CLAUDE_CONFIG_DIR` | Cada valor de `CLAUDE_CONFIG_DIR` isola dados, config e sessão numa pasta própria |
+| Nome do bichinho | `main.js` `petName`, `renderer/pet.js` | Prefixa a linha de status ("Mimi está executando") quando definido |
+| Skins | `renderer/pet.js` `SKINS`/`applySkin()` | Roupa desenhada por cima do corpo, reaproveitando a silhueta do sprite; ver [Skins](#skins) |
 
 ## Regras de negócio
 
@@ -288,3 +291,36 @@ própria: `userData` do Electron, `config.json`, token cifrado do OAuth
 `CLAUDE_CONFIG_DIR` diferentes rodam em paralelo sem colidir — cada uma
 pensa que é a única instância (o lock de instância única é por processo/
 `userData`, não global).
+
+### Skins
+
+Roupa desenhada por cima do corpo do bichinho, reaproveitando as **mesmas
+linhas do sprite** que desenham o corpo (linhas 4–6 = "camisa", linha 7 =
+"bermuda") — garante que a roupa nunca escapa da silhueta, é o mesmo
+desenho, só com outra cor. Cocar/chapéu usa a técnica já existente do
+capacete do modo "mecânico" (bitmap próprio, posicionado acima da cabeça
+com `y` negativo). `default` (sem overlay) mantém a cor original do
+bichinho.
+
+`SKIN_KEYS` é validado no processo principal (`main.js`), nunca confiando
+na lista que o renderer possa mandar de volta — mesmo padrão do
+`CONFIG_SCHEMA` (R6 do ADR-001): quem decide o que é uma skin válida é o
+main, não quem manda o patch.
+
+**Regra de conteúdo, não só técnica**: as skins "Ninja" e "Pirata" foram
+desenhadas como arquétipos genéricos, deliberadamente **não** reproduzindo
+personagens específicos protegidos por direitos autorais — paleta de cor
+diferente da do personagem que inspirou o pedido original, sem os
+elementos que os tornariam especificamente identificáveis (símbolo de
+vila, chapéu de palha com faixa vermelha + cicatriz), e o nome do
+personagem não aparece em nenhum rótulo, variável ou comentário do
+código. Isso é decisão de projeto, não só de arte — qualquer skin nova
+inspirada em propriedade intelectual de terceiros deveria seguir o mesmo
+critério antes de ser publicada neste repositório público.
+
+Painel abre numa janela mais larga (320px, só nesse estado —
+`fitSize()`/`#card.skins-open`) pra caber os swatches de cor
+confortavelmente. Clicar num item já aplica a skin no bichinho de verdade
+(o `#stage` continua visível atrás do painel) como pré-visualização ao
+vivo — "Salvar" persiste, "Cancelar" reaplica a skin salva sem precisar
+recarregar a janela.

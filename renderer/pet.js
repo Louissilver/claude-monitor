@@ -40,6 +40,108 @@ const SPRITE = [
   })
 })()
 
+// Skins: roupa desenhada por cima do corpo, reaproveitando as MESMAS linhas
+// do SPRITE pra "camisa" (linhas 4-6) e "bermuda" (linha 7) — garante que a
+// roupa nunca escapa da silhueta do bichinho, é o mesmo desenho, só com
+// outra cor. Cocar/chapéu usa a mesma técnica do buildHat() acima (bitmap
+// próprio, posicionado com y negativo acima da cabeça).
+//
+// "ninja" e "pirata" são inspirados livremente em arquétipos genéricos
+// (não em personagens específicos) — de propósito, paleta de cor diferente
+// da dos personagens que inspiraram o pedido original, ver docs/ADR-001 e a
+// conversa que definiu isso: nome do personagem não aparece em lugar
+// nenhum do código nem da UI.
+const SKINS = {
+  default: null, // sem sobreposição — cor base do bichinho (var(--pixel))
+  brasil: {
+    label: 'Seleção',
+    shirtColor: '#f4d64b', // amarelo canarinho
+    shortsColor: '#1e4fa3', // azul
+  },
+  ninja: {
+    label: 'Ninja',
+    shirtColor: '#22252b', // preto-azulado — não o laranja de personagem nenhum
+    shortsColor: '#22252b',
+    headbandColor: '#8a8f98', // faixa lisa, sem símbolo de vila nenhuma
+  },
+  pirata: {
+    label: 'Pirata',
+    shirtColor: '#e8e2d0', // camisa clara — não vermelha
+    shortsColor: '#6b4a2f', // marrom — não azul
+    hatColor: '#d9b25c',
+    hatBandColor: '#4a3320', // faixa marrom, não vermelha
+  },
+}
+
+function paintSpriteRows(group, rows, startRow, color) {
+  const C = 10
+  rows.forEach((rowStr, i) => {
+    const r = startRow + i
+    for (let c = 0; c < rowStr.length; c++) {
+      if (rowStr[c] === '.') continue
+      const rect = document.createElementNS(SVGNS, 'rect')
+      rect.setAttribute('x', c * C)
+      rect.setAttribute('y', r * C)
+      rect.setAttribute('width', C)
+      rect.setAttribute('height', C)
+      rect.setAttribute('fill', color)
+      group.appendChild(rect)
+    }
+  })
+}
+function buildHeadband(group, color) {
+  const band = document.createElementNS(SVGNS, 'rect')
+  band.setAttribute('x', 0)
+  band.setAttribute('y', 23)
+  band.setAttribute('width', 100)
+  band.setAttribute('height', 5)
+  band.setAttribute('fill', color)
+  group.appendChild(band)
+  const tail = document.createElementNS(SVGNS, 'rect')
+  tail.setAttribute('x', 78)
+  tail.setAttribute('y', 23)
+  tail.setAttribute('width', 5)
+  tail.setAttribute('height', 18)
+  tail.setAttribute('fill', color)
+  group.appendChild(tail)
+}
+function buildStrawHat(group, hatColor, bandColor) {
+  const brim = document.createElementNS(SVGNS, 'rect')
+  brim.setAttribute('x', -8)
+  brim.setAttribute('y', -14)
+  brim.setAttribute('width', 116)
+  brim.setAttribute('height', 6)
+  brim.setAttribute('rx', 3)
+  brim.setAttribute('fill', hatColor)
+  group.appendChild(brim)
+  const crown = document.createElementNS(SVGNS, 'rect')
+  crown.setAttribute('x', 22)
+  crown.setAttribute('y', -30)
+  crown.setAttribute('width', 56)
+  crown.setAttribute('height', 18)
+  crown.setAttribute('rx', 4)
+  crown.setAttribute('fill', hatColor)
+  group.appendChild(crown)
+  const band = document.createElementNS(SVGNS, 'rect')
+  band.setAttribute('x', 22)
+  band.setAttribute('y', -16)
+  band.setAttribute('width', 56)
+  band.setAttribute('height', 4)
+  band.setAttribute('fill', bandColor)
+  group.appendChild(band)
+}
+function applySkin(key) {
+  const group = el('skin-overlay')
+  if (!group) return
+  clearChildren(group)
+  const skin = SKINS[key]
+  if (!skin) return // 'default' (ou chave desconhecida): sem roupa
+  paintSpriteRows(group, SPRITE.slice(4, 7), 4, skin.shirtColor)
+  paintSpriteRows(group, [SPRITE[7]], 7, skin.shortsColor)
+  if (skin.headbandColor) buildHeadband(group, skin.headbandColor)
+  if (skin.hatColor) buildStrawHat(group, skin.hatColor, skin.hatBandColor)
+}
+
 // hard hat (mechanic mode): pixel-art bitmap so it matches the pet's blocky look
 ;(function buildHat() {
   const g = el('hardhat')
@@ -461,7 +563,7 @@ function renderModelDetail(m) {
   rows.appendChild(total)
 }
 function openModelDetail(m) {
-  document.body.classList.remove('collapsed', 'settings-open', 'chart-open')
+  document.body.classList.remove('collapsed', 'settings-open', 'chart-open', 'skins-open')
   document.body.classList.add('model-detail-open')
   renderModelDetail(m)
   fitSize()
@@ -690,7 +792,8 @@ let lastW = 0
 function fitSize() {
   requestAnimationFrame(() => {
     const collapsed = document.body.classList.contains('collapsed')
-    const w = collapsed ? 140 : 276
+    const skinsOpen = document.body.classList.contains('skins-open')
+    const w = collapsed ? 140 : skinsOpen ? 320 : 276
     const h = el('card').offsetHeight + 24 // 12px margin top + bottom
     if (Math.abs(h - lastH) > 2 || w !== lastW) {
       lastH = h
@@ -726,6 +829,7 @@ function applyAutostartLabel(platformName) {
 window.api.onConfig((cfg) => {
   currentConfig = cfg || {}
   applyAutostartLabel(currentConfig.platform)
+  applySkin(currentConfig.skin || 'default')
 })
 window.api.onRealUsage((u) => {
   realUsage = u || null
@@ -839,7 +943,7 @@ function populateSettings(source) {
   el('set-petname').value = c.petName || ''
 }
 function openSettings() {
-  document.body.classList.remove('collapsed', 'chart-open', 'model-detail-open')
+  document.body.classList.remove('collapsed', 'chart-open', 'model-detail-open', 'skins-open')
   populateSettings(currentConfig)
   clearSaveDirty() // fields now match the saved config
   document.body.classList.add('settings-open')
@@ -851,7 +955,7 @@ window.api.onOpenSettings(openSettings)
 
 // gráfico de uso diário — abre clicando no mapa de calor
 function openChart() {
-  document.body.classList.remove('collapsed', 'settings-open', 'model-detail-open')
+  document.body.classList.remove('collapsed', 'settings-open', 'model-detail-open', 'skins-open')
   document.body.classList.add('chart-open')
   renderChart(lastData?.days30 || [])
   fitSize()
@@ -863,6 +967,67 @@ function closeChart() {
 }
 el('heat').addEventListener('click', openChart)
 el('chart-close').addEventListener('click', closeChart)
+
+// galeria de skins — clicar num item já aplica no bichinho ao vivo (é o
+// mesmo #stage por trás do painel); Salvar persiste, Cancelar reverte pra
+// skin salva sem precisar recarregar nada.
+let pendingSkin = null
+function renderSkinsList() {
+  const box = el('skins-list')
+  clearChildren(box)
+  const options = [{ key: 'default', label: 'Padrão' }, ...Object.entries(SKINS)
+    .filter(([key]) => key !== 'default')
+    .map(([key, s]) => ({ key, label: s.label }))]
+  for (const opt of options) {
+    const btn = document.createElement('button')
+    btn.className = `skin-option${opt.key === pendingSkin ? ' selected' : ''}`
+    btn.type = 'button'
+
+    const swatch = document.createElement('span')
+    swatch.className = 'skin-swatch'
+    const s = SKINS[opt.key]
+    const shirt = document.createElement('i')
+    shirt.style.background = s ? s.shirtColor : 'var(--pixel)'
+    const shorts = document.createElement('i')
+    shorts.style.background = s ? s.shortsColor : 'var(--pixel)'
+    swatch.append(shirt, shorts)
+
+    const name = document.createElement('span')
+    name.className = 'skin-option-name'
+    name.textContent = opt.label
+
+    const check = document.createElement('span')
+    check.className = 'skin-option-check'
+    check.textContent = '✓'
+
+    btn.append(swatch, name, check)
+    btn.addEventListener('click', () => {
+      pendingSkin = opt.key
+      applySkin(pendingSkin) // pré-visualização ao vivo no bichinho de verdade
+      renderSkinsList() // reaplica a marcação "selected"
+    })
+    box.appendChild(btn)
+  }
+}
+function openSkins() {
+  document.body.classList.remove('collapsed', 'settings-open', 'chart-open', 'model-detail-open')
+  document.body.classList.add('skins-open')
+  pendingSkin = currentConfig.skin || 'default'
+  renderSkinsList()
+  fitSize()
+}
+function closeSkins() {
+  document.body.classList.remove('skins-open')
+  applySkin(currentConfig.skin || 'default') // desfaz qualquer pré-visualização não salva
+  fitSize()
+}
+el('skins-btn').addEventListener('click', openSkins)
+el('skins-cancel').addEventListener('click', closeSkins)
+el('skins-save').addEventListener('click', () => {
+  window.api.saveConfig({ skin: pendingSkin || 'default' })
+  document.body.classList.remove('skins-open')
+  fitSize()
+})
 // só preenche os campos com o padrão — não salva sozinho, o Salvar acende
 // (fica "sujo") igual a qualquer outra edição, precisa confirmar
 el('set-reset-defaults').addEventListener('click', () => {

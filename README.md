@@ -94,7 +94,7 @@ que na sua máquina: `git clone` + `npm ci` + `npm start`. Passo a passo em
 
 ## Funcionalidades
 
-- 🐾 Bichinho animado que reflete o estado do Claude Code em tempo real (ocioso, trabalhando, lendo, editando, rodando, pesquisando, dormindo, pegando fogo perto do limite...).
+- 🐾 Bichinho animado que reflete o estado do Claude Code em tempo real (ocioso, trabalhando, lendo, editando, rodando, pesquisando, dormindo, pegando fogo perto do limite...). Dá pra nomear e trocar a roupa dele (skins) numa galeria própria.
 - 📊 Barras de uso da sessão atual (5h) e da semana, com % oficial da Anthropic quando conectado.
 - 🗓️ Mapa de calor dos últimos 30 dias, com gráfico de linha e tooltip instantâneo ao passar o mouse.
 - 💰 Consumo por modelo (Opus, Sonnet, Haiku...) com simulação de custo em $ e detalhe por tipo de token (entrada/saída/cache).

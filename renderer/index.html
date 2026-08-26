@@ -27,6 +27,11 @@
         <span id="ac-plan" class="plan-badge" hidden></span>
       </div>
       <div id="controls">
+        <button id="skins-btn" title="Trocar skin">
+          <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true">
+            <path d="M8 4 L4 8 L6 11 L8 9.5 L8 20 L16 20 L16 9.5 L18 11 L20 8 L16 4 L13 6 L11 6 Z" />
+          </svg>
+        </button>
         <button id="gear" title="Configurações">⚙</button>
         <button id="usage" title="Abrir página de uso">
           <svg viewBox="0 0 24 24" width="9" height="9" aria-hidden="true">
@@ -124,6 +129,7 @@
         <div id="pet">
           <svg id="claude" viewBox="0 0 100 90" width="86" height="77">
             <g id="body"></g>
+            <g id="skin-overlay"></g>
             <g id="eyes"></g>
             <rect id="mouth" x="38" y="54" width="24" height="10" rx="2" />
             <!-- reading glasses (reading mode) -->
@@ -313,6 +319,18 @@
         <div id="model-detail-rows"></div>
         <div class="chart-actions">
           <button id="model-detail-close">Fechar</button>
+        </div>
+      </div>
+
+      <!-- galeria de skins — clicar num item já mostra no bichinho ao vivo
+           (o próprio #stage continua visível acima do painel); Salvar
+           persiste, Cancelar volta pra skin salva -->
+      <div id="skins">
+        <div class="chart-title">Escolher skin</div>
+        <div id="skins-list"></div>
+        <div class="set-actions">
+          <button id="skins-cancel">Cancelar</button>
+          <button id="skins-save">Salvar</button>
         </div>
       </div>
 

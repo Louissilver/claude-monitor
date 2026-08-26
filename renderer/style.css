@@ -125,7 +125,8 @@ body.collapsed #min .ic-max {
   stroke-linejoin: round;
 }
 body.collapsed #gear,
-body.collapsed #usage {
+body.collapsed #usage,
+body.collapsed #skins-btn {
   display: none;
 }
 
@@ -188,7 +189,9 @@ body.settings-open #mini,
 body.chart-open #content,
 body.chart-open #mini,
 body.model-detail-open #content,
-body.model-detail-open #mini {
+body.model-detail-open #mini,
+body.skins-open #content,
+body.skins-open #mini {
   display: none;
 }
 body.settings-open #settings {
@@ -236,6 +239,70 @@ body.model-detail-open #model-detail {
 }
 .mdrow-total span:first-child {
   color: var(--text);
+}
+
+/* galeria de skins — mesmo padrão dos outros painéis, painel mais largo
+   (ver fitSize() em pet.js) pra caber os swatches confortavelmente */
+#skins {
+  display: none;
+  margin-top: 8px;
+  -webkit-app-region: no-drag;
+}
+body.skins-open #skins {
+  display: block;
+}
+#skins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skin-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0.5px solid var(--hair);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.skin-option:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.skin-option.selected {
+  border-color: var(--coral);
+  background: rgba(217, 119, 87, 0.12);
+}
+.skin-swatch {
+  flex: none;
+  display: flex;
+  gap: 2px;
+}
+.skin-swatch i {
+  display: block;
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+}
+.skin-option-name {
+  flex: 1;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.skin-option-check {
+  flex: none;
+  font-size: 12px;
+  color: var(--coral);
+  opacity: 0;
+}
+.skin-option.selected .skin-option-check {
+  opacity: 1;
 }
 .chart-title {
   font-size: 12px;
@@ -449,22 +516,27 @@ body.model-detail-open #model-detail {
 .set-actions button:active {
   transform: scale(0.97);
 }
-#set-cancel {
+#set-cancel,
+#skins-cancel {
   background: rgba(255, 255, 255, 0.12);
   color: var(--text);
 }
-#set-cancel:hover {
+#set-cancel:hover,
+#skins-cancel:hover {
   background: rgba(255, 255, 255, 0.2);
 }
-#set-save {
+#set-save,
+#skins-save {
   background: rgba(217, 119, 87, 0.4); /* calm until there are unsaved changes */
   color: #fff;
 }
-#set-save:hover {
+#set-save:hover,
+#skins-save:hover {
   background: #e2876a;
 }
 /* unsaved changes: light up and pulse so you don't forget to save */
-#set-save.dirty {
+#set-save.dirty,
+#skins-save.dirty {
   background: var(--coral);
   animation: save-pulse 1.6s ease-in-out infinite;
 }
@@ -720,6 +792,11 @@ body.collapsed #card {
   width: 116px;
   padding: 12px 12px 13px;
 }
+/* painel de skins pede mais espaço horizontal (320px de janela, ver
+   fitSize() em pet.js) pra caber os swatches confortavelmente */
+body.skins-open #card {
+  width: 296px;
+}
 body.collapsed #stage {
   margin-top: 9px;
 }
@@ -730,7 +807,8 @@ body.collapsed #pet {
 /* hide minimize while settings/chart/model-detail are open (toggling it bugs the layout) */
 body.settings-open #min,
 body.chart-open #min,
-body.model-detail-open #min {
+body.model-detail-open #min,
+body.skins-open #min {
   display: none;
 }
 

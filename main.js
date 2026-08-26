@@ -164,6 +164,7 @@ const DEFAULT_CONFIG = {
   alertThresholds: [80, 95],
   fireThreshold: 90,
   petName: '',
+  skin: 'default',
   pollIntervalMs: 4000,
   activeThresholdMs: 20000,
   sleepThresholdMs: 300000,
@@ -183,6 +184,11 @@ function loadConfig() {
   return { ...DEFAULT_CONFIG }
 }
 
+// Lista própria do processo principal — nunca confia na lista de skins que
+// o renderer possa mandar de volta (mesmo espírito do CONFIG_SCHEMA: quem
+// decide o que é válido é o main, não quem manda o patch).
+const SKIN_KEYS = ['default', 'brasil', 'ninja', 'pirata']
+
 // --- validação da config salva pelo renderer (fecha R6) ---------------------
 // Allowlist explícita: cada chave só é aceita se passar no validador. Tudo
 // que não está aqui é descartado — inclusive `__proto__`/`constructor`, que
@@ -191,6 +197,7 @@ const CONFIG_SCHEMA = {
   plan: (v) => v === 'pro' || v === 'max5x' || v === 'max20x',
   startAtLogin: (v) => typeof v === 'boolean',
   alerts: (v) => typeof v === 'boolean',
+  skin: (v) => SKIN_KEYS.includes(v),
   alertThresholds: (v) =>
     Array.isArray(v) &&
     v.length > 0 &&
