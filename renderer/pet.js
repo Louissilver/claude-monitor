@@ -112,18 +112,28 @@ function paintSpriteRows(group, rows, startRow, color) {
   })
 }
 function buildHeadband(group, color) {
-  const band = document.createElementNS(SVGNS, 'rect')
-  band.setAttribute('x', 0)
-  band.setAttribute('y', 23)
-  band.setAttribute('width', 100)
-  band.setAttribute('height', 5)
-  band.setAttribute('fill', color)
-  group.appendChild(band)
+  // Máscara cobre a cabeça inteira acima da linha dos olhos (linhas 0-2
+  // do SPRITE — inclui a linha mais larga, onde ficariam as orelhas).
+  // #eyes é desenhado DEPOIS de #skin-overlay no SVG (ver index.html),
+  // então os olhos aparecem por cima da máscara automaticamente — sobra
+  // só a linha 3 (altura dos olhos) com a cor base do bichinho, criando
+  // o efeito de fresta sem precisar recortar buraco nenhum aqui.
+  paintSpriteRows(group, SPRITE.slice(0, 3), 0, color)
+  // nó da bandana, centralizado na testa, um pouco acima da cabeça
+  const knot = document.createElementNS(SVGNS, 'rect')
+  knot.setAttribute('x', 42)
+  knot.setAttribute('y', -4)
+  knot.setAttribute('width', 16)
+  knot.setAttribute('height', 7)
+  knot.setAttribute('rx', 2)
+  knot.setAttribute('fill', color)
+  group.appendChild(knot)
+  // tira caindo atrás, saindo de baixo da máscara
   const tail = document.createElementNS(SVGNS, 'rect')
   tail.setAttribute('x', 78)
-  tail.setAttribute('y', 23)
+  tail.setAttribute('y', 20)
   tail.setAttribute('width', 5)
-  tail.setAttribute('height', 18)
+  tail.setAttribute('height', 20)
   tail.setAttribute('fill', color)
   group.appendChild(tail)
 }
