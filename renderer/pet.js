@@ -736,10 +736,8 @@ function render(d) {
           : st === 'tired'
             ? 'no limite'
             : 'ocioso'
-  const petName = (currentConfig.petName || '').trim()
-  const statusLine = petName ? `${petName} está ${word}` : word
-  el('status-text').textContent = statusLine
-  el('mini-text').textContent = statusLine
+  el('status-text').textContent = word
+  el('mini-text').textContent = word
   el('rate').textContent =
     d.active && d.tokensPerMin > 0
       ? `${fmtTokens(d.tokensPerMin)} tok/min`
@@ -826,10 +824,17 @@ function applyAutostartLabel(platformName) {
   label.textContent =
     platformName === 'linux' ? 'Iniciar automaticamente ao entrar na sessão' : 'Iniciar com o Windows'
 }
+// badge fixo no topo do stage — só aparece quando o bichinho tem nome
+function applyPetNameBadge(name) {
+  const badge = el('pet-name-badge')
+  if (!badge) return
+  badge.textContent = (name || '').trim()
+}
 window.api.onConfig((cfg) => {
   currentConfig = cfg || {}
   applyAutostartLabel(currentConfig.platform)
   applySkin(currentConfig.skin || 'default')
+  applyPetNameBadge(currentConfig.petName)
 })
 window.api.onRealUsage((u) => {
   realUsage = u || null

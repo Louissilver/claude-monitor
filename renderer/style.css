@@ -140,7 +140,9 @@ body.collapsed #skins-btn {
   align-items: center;
   gap: 5px;
   height: 19px; /* match #controls buttons so text centers on the same line */
-  max-width: 138px;
+  /* #controls tem 5 ícones agora (skins-btn incluído) — 110px deixa uns
+     10px de folga antes da badge do plano encostar no botão mais à esquerda */
+  max-width: 110px;
   font-size: 9.5px;
   line-height: 1;
   color: var(--muted);
@@ -823,6 +825,27 @@ body.skins-open #min {
   box-shadow: 0 0 22px 7px rgba(6, 5, 4, 0.7);
   overflow: hidden;
 }
+/* nome do bichinho — fixo no topo centralizado do stage, acima de tudo */
+#pet-name-badge {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  background: var(--pixel);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+#pet-name-badge:empty {
+  display: none;
+}
 #scene {
   position: absolute;
   inset: 0;
@@ -947,10 +970,12 @@ body.settings-open #robot,
 body.settings-open #gears {
   opacity: 1;
 }
-/* declutter the scene while configuring */
+/* declutter the scene while configuring — só a roupa de operador (capacete
+   do #robot) aparece, a skin escolhida não briga com ela visualmente */
 body.settings-open #zzz,
 body.settings-open #flames,
-body.settings-open #sweat {
+body.settings-open #sweat,
+body.settings-open #skin-overlay {
   display: none;
 }
 /* reading mode: an open book with a magnifying glass scanning the lines */
