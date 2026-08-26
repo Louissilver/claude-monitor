@@ -60,9 +60,10 @@ const SKINS = {
   brasil: {
     label: 'Seleção',
     shirtColor: '#f4d64b', // amarelo canarinho
-    // mesma altura/corte da camisa da skin Pirata — só linha 6, afastada
-    // dos olhos e da boca
-    shirtMask: ['.###..###.'],
+    // mesma altura da camisa da skin Pirata (só linha 6, afastada dos
+    // olhos e da boca) mas fechada — sem o vão do meio, que é só da
+    // versão "aberta" da Pirata
+    shirtMask: [SPRITE[6]],
     shirtStartRow: 6,
     shortsColor: '#1e4fa3', // azul
   },
