@@ -152,66 +152,55 @@ const SKINS = {
   // genérica, que continua existindo do jeito que era.
   naruto: {
     label: 'Ninja (laranja)',
-    shirtColor: '#e8641c', // jaqueta laranja — cobertura padrão, fechada (sem corte aberto)
+    headColor: '#f4c430', // cabeça amarela, combinando com a jaqueta
+    shirtColor: '#e8641c', // jaqueta laranja
+    shirtMask: [SPRITE[6]], // cobertura de 1 linha, fechada, encostada na calça
+    shirtStartRow: 6, // casaco descido, colado na cintura
     shortsColor: '#1c2733', // calça azul-escura
     extra(group) {
       // gola preta
       const collar = document.createElementNS(SVGNS, 'rect')
       collar.setAttribute('x', 20)
-      collar.setAttribute('y', 40)
+      collar.setAttribute('y', 60)
       collar.setAttribute('width', 60)
-      collar.setAttribute('height', 6)
+      collar.setAttribute('height', 3)
       collar.setAttribute('fill', '#171512')
       group.appendChild(collar)
       // zíper central
       const zip = document.createElementNS(SVGNS, 'rect')
       zip.setAttribute('x', 48)
-      zip.setAttribute('y', 40)
+      zip.setAttribute('y', 60)
       zip.setAttribute('width', 4)
-      zip.setAttribute('height', 30)
+      zip.setAttribute('height', 10)
       zip.setAttribute('fill', '#171512')
       group.appendChild(zip)
-      // faixa de pano azul da bandana, terminando bem na linha dos olhos
+      // faixa de pano azul da bandana — mais grossa, um pixel mais alta
       const cloth = document.createElementNS(SVGNS, 'rect')
       cloth.setAttribute('x', 8)
-      cloth.setAttribute('y', 24)
+      cloth.setAttribute('y', 14)
       cloth.setAttribute('width', 84)
-      cloth.setAttribute('height', 6)
+      cloth.setAttribute('height', 9)
       cloth.setAttribute('fill', '#2e5fa3')
       group.appendChild(cloth)
       // tiras caindo atrás, uma de cada lado
       ;[6, 89].forEach((x) => {
         const tail = document.createElementNS(SVGNS, 'rect')
         tail.setAttribute('x', x)
-        tail.setAttribute('y', 24)
+        tail.setAttribute('y', 14)
         tail.setAttribute('width', 5)
         tail.setAttribute('height', 18)
         tail.setAttribute('fill', '#2e5fa3')
         group.appendChild(tail)
       })
-      // placa metálica
+      // placa metálica — um pixel mais alta, sem símbolo gravado
       const plate = document.createElementNS(SVGNS, 'rect')
       plate.setAttribute('x', 20)
-      plate.setAttribute('y', 16)
+      plate.setAttribute('y', 6)
       plate.setAttribute('width', 60)
       plate.setAttribute('height', 9)
       plate.setAttribute('rx', 1)
       plate.setAttribute('fill', '#b8bcc2')
       group.appendChild(plate)
-      // símbolo gravado na placa — marca abstrata em blocos, estilo
-      // pixel art (sem tentar reproduzir o símbolo real em detalhe)
-      ;[
-        [47, 18, 6, 2],
-        [49, 17, 2, 5],
-      ].forEach(([x, y, w, h]) => {
-        const seg = document.createElementNS(SVGNS, 'rect')
-        seg.setAttribute('x', x)
-        seg.setAttribute('y', y)
-        seg.setAttribute('width', w)
-        seg.setAttribute('height', h)
-        seg.setAttribute('fill', '#171512')
-        group.appendChild(seg)
-      })
     },
   },
 }
@@ -305,6 +294,7 @@ function applySkin(key) {
   // qualquer outra skin/padrão.
   document.body.classList.toggle('skin-glasses', !!(skin && skin.showGlasses))
   if (!skin) return // 'default' (ou chave desconhecida): sem roupa
+  if (skin.headColor) paintSpriteRows(group, SPRITE.slice(0, 3), 0, skin.headColor)
   paintSpriteRows(group, skin.shirtMask || SPRITE.slice(4, 7), skin.shirtStartRow || 4, skin.shirtColor)
   paintSpriteRows(group, [SPRITE[7]], 7, skin.shortsColor)
   if (skin.headbandColor) buildHeadband(group, skin.headbandColor)
