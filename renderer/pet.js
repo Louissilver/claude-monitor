@@ -128,6 +128,17 @@ function buildHeadband(group, color) {
   // (rows4-6), evita as duas sobreposições brigando por cor na mesma
   // célula.
   paintSpriteRows(group, [...SPRITE.slice(0, 3), NINJA_MASK_ROW3], 0, color)
+  // detalhe da bandana: 1 "pixel" de altura (10 unidades) x 4 de largura
+  // (40 unidades), centralizado, 2 linhas acima dos olhos (row3=y30 —
+  // fica em y10-20, que é a row1). Cinza claro/prata, destaca contra a
+  // máscara preta.
+  const stripe = document.createElementNS(SVGNS, 'rect')
+  stripe.setAttribute('x', 30)
+  stripe.setAttribute('y', 10)
+  stripe.setAttribute('width', 40)
+  stripe.setAttribute('height', 10)
+  stripe.setAttribute('fill', '#cdd1d6')
+  group.appendChild(stripe)
   // tira caindo atrás, saindo de baixo da máscara
   const tail = document.createElementNS(SVGNS, 'rect')
   tail.setAttribute('x', 78)
