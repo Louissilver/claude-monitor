@@ -78,11 +78,12 @@ const SKINS = {
     // baixo) em vez do preenchimento cheio do SPRITE — efeito colete,
     // não camisa fechada. Continua um subconjunto das células do
     // SPRITE nessas linhas, então nunca escapa da silhueta do corpo.
-    // Começa na linha 5 (não 4) e cobre só 2 linhas — deixa a linha 4
-    // com a cor base do corpo, um "pescoço" que afasta a camisa dos
-    // olhos (linha 3).
-    shirtMask: ['.###..###.', '.###..###.'],
-    shirtStartRow: 5,
+    // Só a linha 6 (não 4-6) — deixa as linhas 4 e 5 com a cor base do
+    // corpo, afastando a camisa tanto dos olhos (linha 3) quanto da
+    // boca (que ocupa parte das linhas 4-5, y 54-64). Fica pequena de
+    // propósito.
+    shirtMask: ['.###..###.'],
+    shirtStartRow: 6,
     shortsColor: '#2a4a8a', // azul
     hatColor: '#d9b25c',
     hatBandColor: '#c0392b', // faixa vermelha
