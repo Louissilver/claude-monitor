@@ -69,16 +69,23 @@ const SKINS = {
     headbandColor: '#8a8f98', // faixa lisa, sem símbolo de vila nenhuma
   },
   pirata: {
+    // Paleta igual à do personagem que inspirou o pedido, por decisão
+    // explícita do usuário (confirmado sabendo do risco — ver conversa).
+    // Não é mais a versão genérica original deste projeto.
     label: 'Pirata',
     shirtColor: '#c0392b', // vermelho
     // "aberta": vão no meio do peito (mostra a cor base do corpo por
     // baixo) em vez do preenchimento cheio do SPRITE — efeito colete,
     // não camisa fechada. Continua um subconjunto das células do
     // SPRITE nessas linhas, então nunca escapa da silhueta do corpo.
-    shirtMask: ['####..####', '.###..###.', '.###..###.'],
-    shortsColor: '#6b4a2f', // marrom — não azul, mantém distância do personagem
+    // Começa na linha 5 (não 4) e cobre só 2 linhas — deixa a linha 4
+    // com a cor base do corpo, um "pescoço" que afasta a camisa dos
+    // olhos (linha 3).
+    shirtMask: ['.###..###.', '.###..###.'],
+    shirtStartRow: 5,
+    shortsColor: '#2a4a8a', // azul
     hatColor: '#d9b25c',
-    hatBandColor: '#4a3320', // faixa marrom, não vermelha
+    hatBandColor: '#c0392b', // faixa vermelha
   },
 }
 
@@ -145,7 +152,7 @@ function applySkin(key) {
   clearChildren(group)
   const skin = SKINS[key]
   if (!skin) return // 'default' (ou chave desconhecida): sem roupa
-  paintSpriteRows(group, skin.shirtMask || SPRITE.slice(4, 7), 4, skin.shirtColor)
+  paintSpriteRows(group, skin.shirtMask || SPRITE.slice(4, 7), skin.shirtStartRow || 4, skin.shirtColor)
   paintSpriteRows(group, [SPRITE[7]], 7, skin.shortsColor)
   if (skin.headbandColor) buildHeadband(group, skin.headbandColor)
   if (skin.hatColor) buildStrawHat(group, skin.hatColor, skin.hatBandColor)
