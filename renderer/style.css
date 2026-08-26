@@ -1011,7 +1011,8 @@ body.act-reading #reading {
   stroke-width: 2.4;
   stroke-linecap: round;
 }
-body.act-reading #glasses {
+body.act-reading #glasses,
+body.skin-glasses #glasses {
   opacity: 1;
 }
 .dc-card {

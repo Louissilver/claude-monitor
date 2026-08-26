@@ -93,6 +93,56 @@ const SKINS = {
     hatColor: '#d9b25c',
     hatBandColor: '#c0392b', // faixa vermelha
   },
+  // Visual fiel ao personagem que inspirou o pedido (óculos redondos +
+  // marca em raio na testa + uniforme preto/branco/vermelho), por
+  // decisão explícita do usuário depois de eu explicar o risco de
+  // reconhecimento — ver conversa. Rótulo continua genérico ("Bruxo",
+  // não o nome do personagem) — reduz uma camada de exposição (uso
+  // nominal de marca) sem tirar nada do que foi pedido visualmente.
+  bruxo: {
+    label: 'Bruxo',
+    shirtColor: '#161616', // capa preta
+    // aberta: vão central (mesma técnica das outras skins) revela a
+    // camisa branca + gravata desenhadas em extra(), não a cor base do
+    // corpo — cobre as 3 linhas do torso (não só uma), pra caber a
+    // gravata com altura de verdade.
+    shirtMask: ['####..####', '.###..###.', '.###..###.'],
+    shortsColor: '#161616', // calça preta
+    showGlasses: true, // reaproveita o #glasses existente (fica na frente dos olhos)
+    extra(group) {
+      const shirt = document.createElementNS(SVGNS, 'rect')
+      shirt.setAttribute('x', 40)
+      shirt.setAttribute('y', 40)
+      shirt.setAttribute('width', 20)
+      shirt.setAttribute('height', 30)
+      shirt.setAttribute('fill', '#f2efe6')
+      group.appendChild(shirt)
+      const tie = document.createElementNS(SVGNS, 'rect')
+      tie.setAttribute('x', 46)
+      tie.setAttribute('y', 42)
+      tie.setAttribute('width', 8)
+      tie.setAttribute('height', 26)
+      tie.setAttribute('fill', '#a5231f')
+      group.appendChild(tie)
+      // marca em raio na testa — três blocos formando um zigue-zague,
+      // estilo pixel art (bate com o resto do bichinho, sem usar path
+      // suave que destoaria)
+      const scarColor = '#e8c9a0'
+      ;[
+        [46, 11, 3, 6],
+        [49, 15, 3, 4],
+        [46, 19, 3, 6],
+      ].forEach(([x, y, w, h]) => {
+        const seg = document.createElementNS(SVGNS, 'rect')
+        seg.setAttribute('x', x)
+        seg.setAttribute('y', y)
+        seg.setAttribute('width', w)
+        seg.setAttribute('height', h)
+        seg.setAttribute('fill', scarColor)
+        group.appendChild(seg)
+      })
+    },
+  },
 }
 
 function paintSpriteRows(group, rows, startRow, color) {
@@ -178,11 +228,17 @@ function applySkin(key) {
   if (!group) return
   clearChildren(group)
   const skin = SKINS[key]
+  // #glasses já existe fora do #skin-overlay (depois de #eyes no SVG —
+  // ver index.html), então fica na frente dos olhos de verdade. Toggle
+  // roda mesmo sem skin válida, pra tirar o óculos ao trocar pra
+  // qualquer outra skin/padrão.
+  document.body.classList.toggle('skin-glasses', !!(skin && skin.showGlasses))
   if (!skin) return // 'default' (ou chave desconhecida): sem roupa
   paintSpriteRows(group, skin.shirtMask || SPRITE.slice(4, 7), skin.shirtStartRow || 4, skin.shirtColor)
   paintSpriteRows(group, [SPRITE[7]], 7, skin.shortsColor)
   if (skin.headbandColor) buildHeadband(group, skin.headbandColor)
   if (skin.hatColor) buildStrawHat(group, skin.hatColor, skin.hatBandColor)
+  if (skin.extra) skin.extra(group)
 }
 
 // hard hat (mechanic mode): pixel-art bitmap so it matches the pet's blocky look
