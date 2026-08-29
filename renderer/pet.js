@@ -55,6 +55,54 @@ const SPRITE = [
 // (pirata: faixa do chapéu e bermuda marrom, nunca a combinação de três
 // cores que tornaria identificável). Ver docs/ADR-001 e o histórico da
 // conversa que definiu esse critério antes de desenhar qualquer coisa.
+// Arte pixel a pixel da skin Mago, extraída do arquivo que o usuário
+// desenhou no LibreSprite (`D:\libresprite\sprites\claude-gandalf.ase`,
+// frame 2 — 15x15). Cada célula virou um retângulo (x, y, largura,
+// altura, cor) neste sistema de coordenadas (C=10, corpo em x0-100).
+// O grid do .ase tem 2 colunas de sobra de cada lado (aba do chapéu) —
+// subtraídas na extração — e o alinhamento das colunas dos olhos (3 e
+// 6) bateu exato com SPRITE, confirmando que a conversão ficou correta;
+// a única linha comprimida foi uma de preenchimento cinza-claro liso
+// sem detalhe (entre a barba e os pés), pra caber nas 9 linhas do
+// bichinho sem esticar nem cortar os pés. 'var(--pixel)' nas células
+// que são a pele do bichinho, pra sempre bater com a cor viva do corpo.
+// Os 2 vãos pretos que o .ase original tinha (linha dos olhos, y30, e
+// o entalhe da boca, y50) foram fechados com a cor da célula ao redor —
+// o bichinho já renderiza #eyes (pisca) e #mouth (mastiga) por cima de
+// qualquer skin (ver z-order no index.html), então não precisam de
+// pixel preto próprio aqui; um buraco fixo ali só brigaria com a
+// animação de verdade.
+const GANDALF_ART = [
+  [30, -40, 10, 10, '#9badb7'],
+  [40, -30, 10, 10, '#9badb7'],
+  [40, -20, 20, 10, '#9badb7'],
+  [30, -10, 40, 10, '#9badb7'],
+  [10, 0, 80, 10, '#9badb7'],
+  [-10, 10, 120, 10, '#9badb7'],
+  [0, 20, 20, 10, '#696a6a'],
+  [20, 20, 60, 10, 'var(--pixel)'],
+  [80, 20, 20, 10, '#696a6a'],
+  [0, 30, 10, 10, '#696a6a'],
+  [10, 30, 80, 10, 'var(--pixel)'], // linha dos olhos — fechada, #eyes desenha por cima
+  [90, 30, 10, 10, '#696a6a'],
+  [0, 40, 20, 10, '#696a6a'],
+  [20, 40, 20, 10, 'var(--pixel)'],
+  [40, 40, 20, 10, '#696a6a'],
+  [60, 40, 20, 10, 'var(--pixel)'],
+  [80, 40, 20, 10, '#696a6a'],
+  [0, 50, 100, 10, '#696a6a'], // entalhe da boca — fechado, #mouth desenha por cima
+  [10, 60, 10, 10, '#9badb7'],
+  [20, 60, 60, 10, '#696a6a'],
+  [80, 60, 10, 10, '#9badb7'],
+  [10, 70, 30, 10, '#9badb7'],
+  [40, 70, 20, 10, '#696a6a'],
+  [60, 70, 30, 10, '#9badb7'],
+  [10, 80, 10, 10, 'var(--pixel)'],
+  [30, 80, 10, 10, 'var(--pixel)'],
+  [60, 80, 10, 10, 'var(--pixel)'],
+  [80, 80, 10, 10, 'var(--pixel)'],
+]
+
 const SKINS = {
   default: null, // sem sobreposição — cor base do bichinho (var(--pixel))
   brasil: {
@@ -203,6 +251,25 @@ const SKINS = {
       group.appendChild(plate)
     },
   },
+  // Visual fiel ao personagem que inspirou o pedido — chapéu pontudo,
+  // manto e barba cinza — por decisão explícita do usuário, ciente do
+  // risco (mesmo protocolo das outras skins fiéis). Sem cajado por
+  // pedido do usuário. Rótulo genérico, mesma razão de sempre.
+  //
+  // Diferente das outras skins (que tingem por cima do SPRITE padrão),
+  // esta usa a arte pixel a pixel que o usuário desenhou no LibreSprite
+  // (`D:\libresprite\sprites\claude-gandalf.ase`, frame 2) — `art` é uma
+  // lista de retângulos (x, y, largura, altura, cor) já extraída e
+  // convertida pra esse sistema de coordenadas (ver GANDALF_ART).
+  // `hideBody: true` esconde o #body padrão embaixo, porque a arte tem
+  // vãos pretos internos (sombra da barba) que devem mostrar o fundo do
+  // #stage por trás, não a cor laranja padrão do corpo.
+  mago: {
+    label: 'Mago',
+    hideBody: true,
+    art: GANDALF_ART,
+    swatchColors: ['#9badb7', '#696a6a'], // chapéu / manto, pro preview da galeria
+  },
 }
 
 function paintSpriteRows(group, rows, startRow, color) {
@@ -258,6 +325,17 @@ function buildHeadband(group, color) {
   tail.setAttribute('fill', color)
   group.appendChild(tail)
 }
+function buildArt(group, rects) {
+  rects.forEach(([x, y, w, h, fill]) => {
+    const rect = document.createElementNS(SVGNS, 'rect')
+    rect.setAttribute('x', x)
+    rect.setAttribute('y', y)
+    rect.setAttribute('width', w)
+    rect.setAttribute('height', h)
+    rect.setAttribute('fill', fill)
+    group.appendChild(rect)
+  })
+}
 function buildStrawHat(group, hatColor, bandColor) {
   const brim = document.createElementNS(SVGNS, 'rect')
   brim.setAttribute('x', -8)
@@ -293,7 +371,17 @@ function applySkin(key) {
   // roda mesmo sem skin válida, pra tirar o óculos ao trocar pra
   // qualquer outra skin/padrão.
   document.body.classList.toggle('skin-glasses', !!(skin && skin.showGlasses))
+  // skins com `art` (bitmap pixel a pixel próprio, ex.: Mago) escondem o
+  // #body padrão por baixo — a arte cobre a silhueta inteira sozinha e
+  // pode ter vãos internos que devem mostrar o fundo do #stage, não a
+  // cor laranja padrão do corpo.
+  el('body').style.display = skin && skin.hideBody ? 'none' : ''
   if (!skin) return // 'default' (ou chave desconhecida): sem roupa
+  if (skin.art) {
+    buildArt(group, skin.art)
+    if (skin.extra) skin.extra(group)
+    return
+  }
   if (skin.headColor) paintSpriteRows(group, SPRITE.slice(0, 3), 0, skin.headColor)
   paintSpriteRows(group, skin.shirtMask || SPRITE.slice(4, 7), skin.shirtStartRow || 4, skin.shirtColor)
   paintSpriteRows(group, [SPRITE[7]], 7, skin.shortsColor)
@@ -1152,9 +1240,9 @@ function renderSkinsList() {
     swatch.className = 'skin-swatch'
     const s = SKINS[opt.key]
     const shirt = document.createElement('i')
-    shirt.style.background = s ? s.shirtColor : 'var(--pixel)'
+    shirt.style.background = s ? s.shirtColor || (s.swatchColors && s.swatchColors[0]) : 'var(--pixel)'
     const shorts = document.createElement('i')
-    shorts.style.background = s ? s.shortsColor : 'var(--pixel)'
+    shorts.style.background = s ? s.shortsColor || (s.swatchColors && s.swatchColors[1]) : 'var(--pixel)'
     swatch.append(shirt, shorts)
 
     const name = document.createElement('span')
